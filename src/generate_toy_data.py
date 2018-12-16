@@ -10,59 +10,40 @@ from treetime.seq_utils import seq2prof, profile_maps
 
 from betatree import betatree
 
-def parse_alignment_name(fname):
-    base = os.path.basename(fname)[:-9]
-    params = {}
-    for x in base.split('_'):
-        try:
-            params[x[0]]=int(x[1:])
-        except:
-            try:
-                params[x[0]]=float(x[1:])
-            except:
-                try:
-                    params[x[:-2]]=int(x[-2:])
-                except:
-                    pass
-
-    return params
-
-
-def model_name(prefix, params):
-    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}.npz'.format(**params)
-
-def mutation_count_name(prefix, params):
-    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}_mutations.npz'.format(**params)
-
-def alignment_name(prefix, params):
-    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}.fasta.gz'.format(**params)
-
-def tree_name(prefix, params):
-    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}.nwk'.format(**params)
+from filenames import *
 
 def save_model(gtr_model, fname):
     np.savez(fname, pi=gtr_model.Pi, mu=gtr_model.mu, W=gtr_model.W, alphabet=gtr_model.alphabet)
 
 def save_mutation_count(T, fname):
-    n_ija,T_ia,root = get_mutation_count(T.tree, T.gtr.alphabet)
+    n_ija,T_ia,root = get_mutation_count(T, T.gtr.alphabet)
     np.savez(fname, n_ija=n_ija, T_ia=T_ia, root_sequence=root)
 
 def load_mutation_count(fname):
     d = np.load(fname)
     return d['n_ija'], d['T_ia'], d['root_sequence']
 
+
 def load_model(fname):
     d = np.load(fname)
     return GTR_site_specific.custom(alphabet=d['alphabet'], mu=d['mu'], pi=d['pi'], W=d['W'])
 
-def get_mutation_count(tree, alphabet):
+
+def get_mutation_count(tree, alphabet, marginal=False):
+    if marginal:
+        return get_marginal_mutation_count(tree, alphabet)
+    else:
+        return get_ML_mutation_count(tree, alphabet)
+
+
+def get_ML_mutation_count(tree, alphabet):
     alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
-    L = len(tree.root.sequence)
-    q=len(alphabet)
+    L = tree.seq_len
+    q = len(alphabet)
     positions = np.arange(L)
     n_ija = np.zeros((q,q,L), dtype=int)
     T_ia = np.zeros((q,L),dtype=float)
-    for n in tree.get_nonterminals():
+    for n in tree.tree.get_nonterminals():
         parent_profile = np.zeros(L, dtype=int)
         for ai,a in enumerate(alphabet):
             parent_profile[n.sequence==a] = ai
@@ -77,7 +58,24 @@ def get_mutation_count(tree, alphabet):
 
             n_ija[child_profile, parent_profile, positions] += (1-(parent_profile==child_profile))
 
-    return n_ija, T_ia, tree.root.sequence
+    return n_ija, T_ia, tree.tree.root.sequence
+
+
+def get_marginal_mutation_count(tree, alphabet):
+    alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
+    L = tree.seq_len
+    q = len(alphabet)
+    n_ija = np.zeros((q,q,L), dtype=float)
+    T_ia = np.zeros((q,L),dtype=float)
+    for n in tree.tree.get_nonterminals():
+        for c in n:
+            mut_stack = np.transpose(tree.get_branch_mutation_matrix(c, full_sequence=True), (2,1,0))
+            T_ia += c.branch_length * mut_stack.sum(axis=0)
+            T_ia += c.branch_length * mut_stack.sum(axis=1)
+
+            n_ija += mut_stack
+
+    return n_ija, T_ia, tree.tree.root.sequence
 
 
 def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
@@ -106,12 +104,32 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
                 save_mutation_count(mySeq, mutation_count_name(out_prefix, params))
                 with gzip.open(alignment_name(out_prefix, params), 'wt') as fh:
                     AlignIO.write(mySeq.get_aln(), fh, 'fasta')
+                reconstruct_tree(out_prefix, params)
+
+
+def reconstruct_tree(prefix, params):
+    #call = ['iqtree', '-s', alignment_name(prefix, params), '-st', 'DNA', '-nt', '2', '-m', 'JC']
+    fname =  alignment_name(prefix, params)
+    call = ['gunzip -c' ,fname, '|', 'fasttree', '-nt', '>', reconstructed_tree_name(prefix, params)]
+    os.system(' '.join(call))
 
 
 if __name__ == '__main__':
     L=100
     n=3000
+    prefix = 'simulated_data'
+    # for mu in [0.01, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5]:
+    #     for ti in range(3):
+    #         simplex({'L':L, 'n':n, 'm':mu, 'tree':ti}, out_prefix = prefix, n_model=3, n_seqgen=3)
+
     for mu in [0.01, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5]:
         for ti in range(3):
-            prefix = 'simulated_data/'
-            simplex({'L':L, 'n':n, 'm':mu, 'tree':ti}, out_prefix = prefix, n_model=3, n_seqgen=3)
+            params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
+            for mi in range(3):
+                params['model']=mi
+                for si in range(3):
+                    params['seqgen']=si
+
+                    reconstruct_tree(prefix, params)
+
+

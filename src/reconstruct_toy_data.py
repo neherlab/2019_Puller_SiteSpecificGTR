@@ -9,6 +9,7 @@ from treetime.gtr import GTR
 from treetime.seq_utils import seq2prof, profile_maps, alphabets
 
 from generate_toy_data import *
+from filenames import *
 
 def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
     with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
@@ -22,16 +23,20 @@ def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
     return np.array(af)
 
 
-def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap'):
+def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap', marginal=False):
     with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
         aln = AlignIO.read(fh, 'fasta')
     myTree = TreeAnc(gtr=gtr, alphabet=alphabet,
                      tree=tree_name(in_prefix, params), aln=aln,
-                     reduce_alignment=False, verbose = 2)
+                     reduce_alignment=False, verbose = 0)
 
-    myTree.infer_ancestral_sequences(marginal=True)
+    if type(gtr)==str:
+        myTree.infer_ancestral_sequences(marginal=True, infer_gtr=True, normalized_rate=False)
+    else:
+        myTree.infer_ancestral_sequences(marginal=True)
 
-    return get_mutation_count(myTree.tree, alphabet=myTree.gtr.alphabet), myTree.sequence_LH()
+    mutation_counts = get_mutation_count(myTree, alphabet=myTree.gtr.alphabet, marginal=marginal)
+    return mutation_counts, myTree.sequence_LH(), myTree
 
 
 def estimate_GTR(mutation_counts, pc=0.1, single_site=False):
@@ -58,52 +63,46 @@ if __name__ == '__main__':
     prefix = 'simulated_data/'
     files = glob.glob(prefix+'*fasta.gz')
 
-    p_dressed_dist = defaultdict(list)
-    p_dist = defaultdict(list)
-    p_iter_dist = defaultdict(list)
-    p_aln_dist = defaultdict(list)
+    mu_dist = defaultdict(lambda: defaultdict(list))
+    p_dist = defaultdict(lambda: defaultdict(list))
+    W_dist = defaultdict(lambda: defaultdict(list))
 
-    mu_corr = defaultdict(list)
-    mu_dist = defaultdict(list)
-    mu_dressed_dist = defaultdict(list)
-    LH = defaultdict(list)
-
-    W_corr = defaultdict(list)
-    W_dist = defaultdict(list)
-    W_ss_dist = defaultdict(list)
     mu_vals = set()
+    n_vals = set()
 
     pc=0.1
 
-    for fname in files:
+    analysis_types = ['naive', 'single', 'dressed', 'regular', 'marginal', 'iterative']
+
+    for fname in files[:4]:
+        print(fname)
+
         params = parse_alignment_name(fname)
         mu_vals.add(params['m'])
+        n_vals.add(params['n'])
 
         true_model = load_model(model_name(prefix, params))
         true_mut_counts = load_mutation_count(mutation_count_name(prefix, params))
-        dressed = estimate_GTR(true_mut_counts, pc=pc)
-
-        inferred_mut_counts, _ = reconstruct_counts(prefix, params, gtr='JC69', alphabet='nuc_nogap')
-        inferred = estimate_GTR(inferred_mut_counts, pc=pc)
-        inferred_ss = estimate_GTR(inferred_mut_counts, pc=pc, single_site=True)
-
-        naive = p_from_aln(prefix, params)
 
         dset = (params['L'], params['n'], params['m'])
+        for ana in analysis_types:
+            if ana=='naive':
+                naive = p_from_aln(prefix, params)
+                p_dist[ana][dset].append(np.mean([chisq(naive[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+            else:
+                if ana=='dressed':
+                    mc = (true_mut_counts, None, None)
+                else:
+                    mc = reconstruct_counts(prefix, params, gtr=model if ana=='iterative' else 'JC69',
+                                        alphabet='nuc_nogap', marginal=ana=='marginal')
+                model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single')
 
-        LH[dset].append((reconstruct_counts(prefix, params, gtr=inferred)[1], reconstruct_counts(prefix, params, gtr=inferred_ss)[1]))
-        p_dist[dset].append(np.mean([chisq(inferred.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
-        p_dressed_dist[dset].append(np.mean([chisq(dressed.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
-        p_aln_dist[dset].append(np.mean([chisq(naive[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+                if ana!='single':
+                    p_dist[ana][dset].append(np.mean([chisq(model.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+                    mu_dist[ana][dset].append(chisq(model.mu/np.mean(model.mu), true_model.mu/np.mean(true_model.mu)))
 
-        mu_corr[dset].append(np.corrcoef(inferred.mu, true_model.mu)[0,1])
-        mu_dist[dset].append(chisq(inferred.mu/np.mean(inferred.mu), true_model.mu/np.mean(true_model.mu)))
-        mu_dressed_dist[dset].append(chisq(dressed.mu/np.mean(dressed.mu), true_model.mu/np.mean(true_model.mu)))
-
-        np.fill_diagonal(inferred_ss.W,0)
-        W_corr[dset].append(np.corrcoef(inferred.W[inferred.W>0], true_model.W[inferred.W>0])[0,1])
-        W_dist[dset].append(chisq(inferred.W.flatten(), true_model.W.flatten()))
-        W_ss_dist[dset].append(chisq(inferred_ss.W.flatten(), true_model.W.flatten()))
+                np.fill_diagonal(model.W,0)
+                W_dist[ana][dset].append(chisq(model.W.flatten(), true_model.W.flatten()))
 
 
     from matplotlib import pyplot as plt
@@ -112,8 +111,7 @@ if __name__ == '__main__':
     for n in n_vals:
         plt.figure()
         mu_vals = sorted(mu_vals)
-        for label, data in [('reconstructed', p_dist), ('dressed', p_dressed_dist),
-                            ('alignment', p_aln_dist)]:
+        for label, data in p_dist.items():
             plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
                         [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
 
@@ -124,10 +122,10 @@ if __name__ == '__main__':
 
         plt.figure()
         mu_vals = sorted(mu_vals)
-        for label, data in [('mu reconstructed', mu_dist), ('mu dressed', mu_dressed_dist)]:
+        for label, data in mu_dist.items():
             plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
                         [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
-        for label, data in [('W site specific', W_dist),('W single site specific', W_ss_dist)]:
+        for label, data in W_dist.items():
             plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
                         [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
 
@@ -137,8 +135,7 @@ if __name__ == '__main__':
 
 
     plt.figure()
-    for li, (label, data) in enumerate([('reconstructed', p_dist), ('dressed', p_dressed_dist),
-                        ('alignment', p_aln_dist)]):
+    for li, (label, data) in enumerate(p_dist.items()):
         for n in n_vals:
             d = []
             for mu in mu_vals:
