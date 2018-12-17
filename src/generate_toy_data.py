@@ -81,7 +81,7 @@ def get_marginal_mutation_count(tree, alphabet):
 def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
     from Bio import AlignIO
     # generate a model
-    T = betatree.betatree(params['n'], alpha=2.0)
+    T = betatree(params['n'], alpha=2.0)
     T.yule=yule
     T.coalesce()
     if out_prefix:
@@ -115,21 +115,15 @@ def reconstruct_tree(prefix, params):
 
 
 if __name__ == '__main__':
-    L=100
-    n=3000
-    prefix = 'simulated_data'
-    # for mu in [0.01, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5]:
-    #     for ti in range(3):
-    #         simplex({'L':L, 'n':n, 'm':mu, 'tree':ti}, out_prefix = prefix, n_model=3, n_seqgen=3)
+    L=300
 
-    for mu in [0.01, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5]:
-        for ti in range(3):
-            params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-            for mi in range(3):
-                params['model']=mi
-                for si in range(3):
-                    params['seqgen']=si
+    prefix = '2018-12-17_simulated_data'
+    if not os.path.isdir(prefix):
+        os.mkdir(prefix)
 
-                    reconstruct_tree(prefix, params)
-
+    for n in [3000]:
+        for mu in [0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.5]:
+            for ti in range(3):
+                params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
+                simplex(params, out_prefix=prefix, n_model=3, n_seqgen=3, yule=True)
 
