@@ -72,9 +72,9 @@ if __name__ == '__main__':
 
     pc=0.1
 
-    analysis_types = ['naive', 'single', 'dressed', 'regular', 'marginal', 'iterative']
+    analysis_types = ['naive', 'single', 'dressed', 'regular', 'phylo', 'marginal', 'iterative']
 
-    for fname in files[:4]:
+    for fname in files:
         print(fname)
 
         params = parse_alignment_name(fname)
