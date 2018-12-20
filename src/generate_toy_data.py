@@ -121,8 +121,8 @@ if __name__ == '__main__':
     if not os.path.isdir(prefix):
         os.mkdir(prefix)
 
-    for n in [3000]:
-        for mu in [0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.5]:
+    for n in [1000]:
+        for mu in [0.25, 0.35, 0.5]: #[0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.5]:
             for ti in range(3):
                 params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
                 simplex(params, out_prefix=prefix, n_model=3, n_seqgen=3, yule=True)

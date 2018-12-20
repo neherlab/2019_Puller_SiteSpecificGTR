@@ -103,7 +103,7 @@ if __name__ == '__main__':
                     mc = (true_mut_counts, None, None)
                 else:
                     mc = reconstruct_counts(prefix, params, gtr=model if ana=='iterative' else 'JC69',
-                                        alphabet='nuc_nogap', marginal=ana=='marginal')
+                                            alphabet='nuc_nogap', marginal=ana=='marginal', reconstructed_tree=ana=='phylo')
                 model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single')
 
                 if ana!='single':
