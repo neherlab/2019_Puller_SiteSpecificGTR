@@ -1,0 +1,123 @@
+\documentclass[aps,rmp, onecolumn]{revtex4}
+%\documentclass[a4paper,10pt]{scrartcl}
+%\documentclass[aps,rmp,twocolumn]{revtex4}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,graphicx}
+\usepackage{color}
+%\usepackage{cite}
+
+\newcommand{\bq}{\begin{equation}}
+\newcommand{\eq}{\end{equation}}
+\newcommand{\bn}{\begin{eqnarray}}
+\newcommand{\en}{\end{eqnarray}}
+\newcommand{\Vadim}[1]{{\color{blue}Vadim: #1}}
+\newcommand{\Richard}[1]{{\color{red}Richard: #1}}
+\newcommand{\gene}[1]{{\it #1}}
+\newcommand{\mat}[1]{{\bf #1}}
+\newcommand{\vecb}[1]{{\bf #1}}
+\newcommand{\abet}{\mathcal{A}}
+\newcommand{\eqp}{p}
+\newcommand{\LH}{\mathcal{L}}
+\pdfinfo{%
+  /Title    ()
+  /Author   ()
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+
+\begin{document}
+
+\title{Site-specific substitution model inference with iterative tree likelihood maximization.}
+\author{Vadim Puller$^{1,2,3}$ Pavel Sagulenko$^{1}$, Richard Neher$^{1,2,3}$}
+\affiliation{$^{1}$Max Planck Institute for Developmental Biology, 72076 T\"ubingen, Germany\\
+$^{2}$Biozentrum, University of Basel, Klingelbergstrasse 50/70, 4056 Basel, Switzerland\\
+$^{3}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland}
+
+\date{\today}
+
+\maketitle
+
+Most models of sequence evolution express the probability that sequence $\vec{s}$ evolved from sequence $\vec{r}$ in time $t$ as
+\bq
+P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s_{a},r_{a}}
+\label{eq:P_prob}
+\eq
+where $\mat{Q}^{a}$ is the substitution matrix governing evolution at site $i$, and $s_{a}$ and $r_{a}$ are the sequence states at position $i$.
+The product runs over all $L$ sites $a$ and amounts to assuming that different sites of the sequence evolve independently.
+
+In absence of recombination, homologous sequences are related by a tree and the likelihood of observing an alignment $\mat{A}=\{\vec{s^k}, k=1..n\}$ conditional on the tree $T$ and the substitution model $\mat{Q}^{a}$ can be written in terms of propagators defined in Eq.~\ref{eq:P_prob}.
+It is helpful to express this likelihood as product of sequence propagators defined in Eq.~\ref{eq:P_prob} between sequences at the ends of each branch in the tree (implicitly assuming that on different branches is independent and follows the same time reversible model).
+Unknown sequences of internal nodes $\{\vec{x}\}$ need to be summed over and the likelihood can be expressed as
+\begin{equation}
+	\LH(\mat{A}|T,\mat{Q}) = \sum_{\{\vec{x}\}}\prod_{a=1}^L \eqp^{a}_{x^{0}_a} \prod_{k\in T}P(\vec{s}_{k_c}\leftarrow \vec{s}_{k_p},t,\mat{Q}) \ ,
+	\label{eq:LH}
+\end{equation}
+where $\vec{s}_{k_c}$ and $\vec{s}_{k_p}$ are the child and parent sequences of branch $k$, respectively, and the factor $\prod \eqp^{a}_{x^{0}_a}$ is the product of the probabilities of the root sequence $x^{0}_a$ over all positions $i$.
+The probabilities $\vec{\eqp}^{a}$ are the equiblirium probabilities of the substitution model at position $a$.
+The latter ensures that the likelihood is insensitive to a particular choice of the tree root.
+
+The likelihood can be computed efficiently using standard dynamic programming techniques.
+Nevertheless, it requires $\mathcal{O}(n\times L \times q^2)$ operations (where $q$ is the size of the alphabet $\abet$) and optimizing it with respect to a large number of parameters is costly.
+Our goal here is to infer site-specific substitution models using a computationally efficient iterative procedure.
+
+We will parameterize the substitution model as follows:
+We describe the substitution process using site-specific GTR
+(general time-reversible) model, parametrized as:
+\begin{eqnarray}
+Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
+Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki}
+\label{eq:Qij}
+\end{eqnarray}
+where $W_{ij}$ is a symmetric matrix and the second equation ensures conservation of probability.
+In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to ensure that the average rate per site is $\mu^{a}$.
+
+For each branch $k$ in the tree we can compute the likelihoods of the parent and child subtrees obtained by this branch conditional on the sequence at either end of the branch.
+This, in turn, allows us to compute the marginal distribution $\rho^{a}_i$ and $\sigma^{a}_i$ of character $i$ at position $a$ of root sequence of the parent and child subtrees, respectively.
+
+Using the product from of the likelihood, we can now write down compact expressions for the derivative of the likelihood and the with respect to the substitution model.
+\begin{equation}
+	\frac{\partial \log \LH}{\partial \mu^{b}} = \sum_{k\in T} \frac{t_k}{\mu^{b}}\frac{\vec{\sigma}^{k,b} \mat{Q}^{b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}
+\end{equation}
+Analogously, we find for the derivaties wrt to $\eqp^{k,b}_{i}$
+\begin{equation}
+\frac{\partial \log \LH}{\partial \eqp^{b}_i}= \sum_{k\in T} \frac{t_k}{\eqp^{b}_i}\frac{\sum_{h,j}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \frac{\sigma^{0,b}_i}{\eqp^b_i}
+\end{equation}
+where $\sigma^{0,b}_i$ corresponds to state of the root sequence at position $b$.
+The corresponding derivative for the transition matrix $W_{rs}$ is
+\begin{equation}
+	\frac{\partial \log \LH}{\partial W_{ij}}= \sum_{k\in T} \frac{t_k}{W_{ij}} \sum_{a=1}^L\frac{\sum_{h}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}
+\end{equation}
+The at an extremum, all these derivatives have to vanish.
+In addition we need to impose the normalization constraints which is done in the form of Lagrange multipliers such that the final conditions are
+\begin{eqnarray}
+	0 &=& \sum_{k\in T} t_k\frac{\vec{\sigma}^{k,b} \mat{Q}^{b} e^{\mat{Q}^{b}t} \vec{\rho}^{k,b}}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} \nonumber \\
+    0 &=& 	\sum_{k\in T} t_k\frac{\sum_{h,j}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t} \vec{\rho}^{k,b}} + \sigma^{0,b}_i + \lambda^{b}\eqp^b_i + \kappa \sum_j W_{ij}\eqp_i^{b}\eqp_j^{b} \nonumber\\
+	0 &=& \sum_{k\in T} t_k \sum_{a=1}^L\frac{\sum_{h}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \kappa W_{ij}\sum_{b=1}^L \eqp^b_i\eqp^b_j
+\end{eqnarray}
+Summing the second and third equation over $i$ and $i,j$, respectively, and substituting the first equation, we find $\kappa=0$ and $\lambda^a=1$.
+
+To arrive at an iterative scheme to solve these equations, it is helpful to split the individuals terms into \emph{diagonal} contributions (the case in which the sequence does not change along a branch) and \emph{off-diagonal} contributions (substitutions happened on that branch).
+We will first consider the limit of short branches were we can approximate $e^{\mat{Q}^at}=\mat{I} + \mat{Q}^at$ and evaluate to leading order
+\begin{equation}
+\begin{split}
+t_k\frac{\vec{\sigma}^{k,b} \mat{Q}^{b} e^{\mat{Q}^{b}t} \vec{\rho}^{k,b}}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} \approx &	t_k \frac{-\sum_{i} \mu^b\sum_h p_h^b W_{hi} \sigma^{k,b}_i \rho^{k,b}_i + \sum_{i, j\neq i} \mu^b\sigma^{k,b}_i p_i^bW_{ij} \rho^{k,b}_j}{\sum_{i} \sigma^{k,b}_i \rho^{k,b}_i + \sum_{i,j\neq i} \mu^b \sigma^{k,b}_i \eqp_i^b W_{ij}t_k \rho^{k,b}_j}\\
+\end{split}
+\end{equation}
+In the limit of short branches (or if ancestral states are known), $\sigma^{k,b}_i$ and $\rho^{k,b}_i$ are either $0$ or $1$ such that only one of the two terms in the numerator and denominator contribute.
+In case $\sigma^{k,b}_i=\rho^{k,b}_i$ (no substitution on that branch), the denominator is 1 and the numerator $- \mu^b \sum_{i,h}p_h^b W_{hi}t_k$.
+If a substitution happened, numerator and denominator cancel with result 1.
+After summing over all branches, the condition for the mutation rate simplifies to
+\begin{equation}
+	\mu^b \sum_i \eqp_i^b W_{ij}T_j^b = \sum_{i\neq j} n_{ij}
+\end{equation}
+where $T_j^b$ is the sum of all $t_k$ were the sequence is in state $j$.
+
+
+
+\bibliography{GTRbib}
+
+\end{document}
