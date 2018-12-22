@@ -1,4 +1,4 @@
-import os, gzip, glob
+import os, gzip, glob, pickle
 import numpy as np
 from Bio import Phylo, AlignIO
 from collections import defaultdict
@@ -23,11 +23,12 @@ def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
     return np.array(af)
 
 
-def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap', marginal=False):
+def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap', marginal=False, reconstructed_tree=False):
     with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
         aln = AlignIO.read(fh, 'fasta')
+    tree_fname =  reconstructed_tree_name(in_prefix, params) if reconstructed_tree else tree_name(in_prefix, params)
     myTree = TreeAnc(gtr=gtr, alphabet=alphabet,
-                     tree=tree_name(in_prefix, params), aln=aln,
+                     tree=tree_fname, aln=aln,
                      reduce_alignment=False, verbose = 0)
 
     if type(gtr)==str:
@@ -60,8 +61,16 @@ def chisq(p,q):
     return np.sum((p-q)**2)
 
 if __name__ == '__main__':
-    prefix = 'simulated_data/'
-    files = glob.glob(prefix+'*fasta.gz')
+    import argparse
+    parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
+    parser.add_argument("-m", type=float, help="simulated mutation rate")
+    parser.add_argument("-n", type=int, help="number of taxa")
+    parser.add_argument("-L", type=int, help="length of sequence")
+    args=parser.parse_args()
+
+    prefix = '2018-12-17_simulated_data'
+    mask = "/L{L}_n{n}_m{mu}_*fasta.gz".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
+    files = glob.glob(prefix+mask)
 
     mu_dist = defaultdict(lambda: defaultdict(list))
     p_dist = defaultdict(lambda: defaultdict(list))
@@ -94,7 +103,7 @@ if __name__ == '__main__':
                     mc = (true_mut_counts, None, None)
                 else:
                     mc = reconstruct_counts(prefix, params, gtr=model if ana=='iterative' else 'JC69',
-                                        alphabet='nuc_nogap', marginal=ana=='marginal')
+                                            alphabet='nuc_nogap', marginal=ana=='marginal', reconstructed_tree=ana=='phylo')
                 model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single')
 
                 if ana!='single':
@@ -104,47 +113,10 @@ if __name__ == '__main__':
                 np.fill_diagonal(model.W,0)
                 W_dist[ana][dset].append(chisq(model.W.flatten(), true_model.W.flatten()))
 
+    out_prefix = prefix + '_results/'
+    if not os.path.isdir(out_prefix):
+        os.mkdir(out_prefix)
 
-    from matplotlib import pyplot as plt
-    L=100
-    n_vals = [100, 300, 1000, 3000]
-    for n in n_vals:
-        plt.figure()
-        mu_vals = sorted(mu_vals)
-        for label, data in p_dist.items():
-            plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
-                        [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
-
-        plt.yscale('log')
-        plt.legend()
-        plt.xlabel('average rate')
-
-
-        plt.figure()
-        mu_vals = sorted(mu_vals)
-        for label, data in mu_dist.items():
-            plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
-                        [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
-        for label, data in W_dist.items():
-            plt.errorbar(mu_vals, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
-                        [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
-
-        plt.yscale('log')
-        plt.legend()
-        plt.xlabel('average rate')
-
-
-    plt.figure()
-    for li, (label, data) in enumerate(p_dist.items()):
-        for n in n_vals:
-            d = []
-            for mu in mu_vals:
-                d.append((n*mu, np.mean(data[(L,n,mu)]), np.std(data[(L,n,mu)])))
-
-            d = np.array(sorted(d, key=lambda x:x[0]))
-            plt.errorbar(d[:,0], d[:,1], d[:,2], label=label if n==n_vals[0] else '', c='C%d'%(li+1))
-
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.legend()
-    plt.xlabel('tree length')
+    out_fname = out_prefix + "_".join(["{name}{val}".format(name=n, val=args.__getattribute__(n)) for n in ['L', 'n', 'm'] if args.__getattribute__(n)]) + '.pkl'
+    with open(out_fname, 'wb') as fh:
+        pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(mu_dist), dict(W_dist)), fh)
