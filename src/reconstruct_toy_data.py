@@ -1,6 +1,5 @@
 import os, gzip, glob, pickle
 import numpy as np
-from Bio import Phylo, AlignIO
 from collections import defaultdict
 
 from treetime.treeanc import TreeAnc
@@ -10,49 +9,7 @@ from treetime.seq_utils import seq2prof, profile_maps, alphabets
 
 from generate_toy_data import *
 from filenames import *
-
-def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
-    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
-        aln = AlignIO.read(fh, 'fasta')
-
-    alpha = alphabets[alphabet]
-    aln_array = np.array(aln)
-    af = []
-    for a in alpha:
-        af.append(np.mean(aln_array==a, axis=0))
-    return np.array(af)
-
-
-def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap', marginal=False, reconstructed_tree=False):
-    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
-        aln = AlignIO.read(fh, 'fasta')
-    tree_fname =  reconstructed_tree_name(in_prefix, params) if reconstructed_tree else tree_name(in_prefix, params)
-    myTree = TreeAnc(gtr=gtr, alphabet=alphabet,
-                     tree=tree_fname, aln=aln,
-                     reduce_alignment=False, verbose = 0)
-
-    if type(gtr)==str:
-        myTree.infer_ancestral_sequences(marginal=True, infer_gtr=True, normalized_rate=False)
-    else:
-        myTree.infer_ancestral_sequences(marginal=True)
-
-    mutation_counts = get_mutation_count(myTree, alphabet=myTree.gtr.alphabet, marginal=marginal)
-    return mutation_counts, myTree.sequence_LH(), myTree
-
-
-def estimate_GTR(mutation_counts, pc=0.1, single_site=False):
-    n_ija, T_ia, root_sequence = mutation_counts
-    root_prof = seq2prof(root_sequence, profile_maps['nuc_nogap']).T
-
-    if single_site:
-        inferred_model = GTR.infer(n_ija.sum(axis=-1), T_ia.sum(axis=-1),
-                          root_state=root_prof.sum(axis=-1), alphabet='nuc_nogap')
-    else:
-        inferred_model = GTR_site_specific.infer(n_ija, T_ia, pc=pc,
-                          root_state=root_prof, alphabet='nuc_nogap')
-    return inferred_model
-
-
+from estimation import *
 
 def KL(p,q):
     return np.sum(p*log(p/q))
@@ -75,13 +32,16 @@ if __name__ == '__main__':
     mu_dist = defaultdict(lambda: defaultdict(list))
     p_dist = defaultdict(lambda: defaultdict(list))
     W_dist = defaultdict(lambda: defaultdict(list))
+    delta_LH = defaultdict(lambda: defaultdict(list))
+    avg_rate = defaultdict(lambda: defaultdict(list))
 
     mu_vals = set()
     n_vals = set()
 
     pc=0.1
+    niter=2
 
-    analysis_types = ['naive', 'single', 'dressed', 'regular', 'phylo', 'marginal', 'iterative']
+    analysis_types = ['naive', 'single', 'dressed', 'regular', 'phylo', 'marginal', 'true_model', 'iterative']
 
     for fname in files:
         print(fname)
@@ -91,9 +51,13 @@ if __name__ == '__main__':
         n_vals.add(params['n'])
 
         true_model = load_model(model_name(prefix, params))
+        true_model_average_rate = true_model.average_rate().mean()
         true_mut_counts = load_mutation_count(mutation_count_name(prefix, params))
-
         dset = (params['L'], params['n'], params['m'])
+
+        _mc, true_LH, _t = reconstruct_counts(prefix, params, gtr=true_model, alphabet='nuc_nogap',
+                                              marginal=True, reconstructed_tree=False)
+
         for ana in analysis_types:
             if ana=='naive':
                 naive = p_from_aln(prefix, params)
@@ -101,10 +65,28 @@ if __name__ == '__main__':
             else:
                 if ana=='dressed':
                     mc = (true_mut_counts, None, None)
+                    bl = [n.branch_length for n in _t.tree.find_clades() if n!=_t]
+                elif ana=='iterative':
+                    model = 'JC69'
+                    for i in range(niter):
+                        mc = reconstruct_counts(prefix, params, gtr=model,
+                                                alphabet='nuc_nogap', marginal=True,
+                                                reconstructed_tree=False)
+                        bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
+                        model = estimate_GTR(mc[0], pc=pc, single_site=False, bl=bl)
                 else:
-                    mc = reconstruct_counts(prefix, params, gtr=model if ana=='iterative' else 'JC69',
-                                            alphabet='nuc_nogap', marginal=ana=='marginal', reconstructed_tree=ana=='phylo')
-                model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single')
+                    rec_model = {'true_model':true_model}
+                    mc = reconstruct_counts(prefix, params, gtr=rec_model.get(ana, 'JC69'),
+                                            alphabet='nuc_nogap', marginal=ana in ['marginal', 'true_model', 'iterative'],
+                                            reconstructed_tree=ana=='phylo')
+
+                    bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
+
+                model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single', bl=bl)
+                avg_rate[ana][dset].append((true_model_average_rate, model.average_rate().mean()))
+                _mc, model_LH, _t = reconstruct_counts(prefix, params, gtr=model, alphabet='nuc_nogap',
+                                                 marginal=True, reconstructed_tree=ana=='phylo')
+                delta_LH[ana][dset].append( (true_LH, model_LH) )
 
                 if ana!='single':
                     p_dist[ana][dset].append(np.mean([chisq(model.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
@@ -119,4 +101,5 @@ if __name__ == '__main__':
 
     out_fname = out_prefix + "_".join(["{name}{val}".format(name=n, val=args.__getattribute__(n)) for n in ['L', 'n', 'm'] if args.__getattribute__(n)]) + '.pkl'
     with open(out_fname, 'wb') as fh:
-        pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(mu_dist), dict(W_dist)), fh)
+        pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(mu_dist),
+                     dict(W_dist), dict(delta_LH), dict(avg_rate)), fh)
