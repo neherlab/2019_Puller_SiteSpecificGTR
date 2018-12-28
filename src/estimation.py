@@ -88,31 +88,28 @@ def get_marginal_mutation_count(tree, alphabet):
     L = tree.seq_len
     q = len(alphabet)
     n_ija = np.zeros((q,q,L), dtype=float)
-    n_ija_eff = np.zeros((q,q,L), dtype=float)
     T_ia = np.zeros((q,L),dtype=float)
     for n in tree.tree.get_nonterminals():
         for c in n:
             mut_stack = np.transpose(tree.get_branch_mutation_matrix(c, full_sequence=True), (2,1,0))
-            neff = np.transpose(tree.get_effective_mutation_matrix(c, full_sequence=True), (2,1,0))
             T_ia += 0.5*c.branch_length * mut_stack.sum(axis=0)
             T_ia += 0.5*c.branch_length * mut_stack.sum(axis=1)
 
-            n_ija_eff += neff
             n_ija += mut_stack
 
-    return n_ija, T_ia, tree.tree.root.sequence, n_ija_eff
+    return n_ija, T_ia, tree.tree.root.sequence
 
 
-def get_average_transition_matrix(tree, model):
+def exact_mu_update(tree, alphabet):
+    alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
+    L = tree.seq_len
+    q = len(alphabet)
+    mu_diag = np.zeros((L), dtype=float)
+    mu_offdiag = np.zeros((L), dtype=float)
+    for n in tree.tree.get_nonterminals():
+        for c in n:
+            (m1,m2), (p1,p2), (W1,W2) = tree.get_update_matrices(c)
+            mu_diag += m1
+            mu_offdiag += m2
 
-    eQt = np.zeros_like(model.v)
-    tQeQt = np.zeros_like(model.v)
-    for n in tree.find_clades():
-        if n==tree.root:
-            continue
-        else:
-            tmp = model.expQt(n.branch_length)
-            eQt+=tmp
-            tQeQt += n.branch_length*model.Q*tmp
-
-    return eQt, tQeQt
+    return (mu_diag, mu_offdiag)
