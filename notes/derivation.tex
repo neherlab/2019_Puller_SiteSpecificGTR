@@ -82,23 +82,61 @@ Using the product from of the likelihood, we can now write down compact expressi
 \begin{equation}
 	\frac{\partial \log \LH}{\partial \mu^{b}} = \sum_{k\in T} \frac{t_k}{\mu^{b}}\frac{\vec{\sigma}^{k,b} \mat{Q}^{b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}
 \end{equation}
-Analogously, we find for the derivaties wrt to $\eqp^{k,b}_{i}$
+The derivative wrt to $\eqp^{b}_{s}$ requires a little more care (and is infact not correct as the commutator needs to be accounted for...):
 \begin{equation}
-\frac{\partial \log \LH}{\partial \eqp^{b}_i}= \sum_{k\in T} \frac{t_k}{\eqp^{b}_i}\frac{\sum_{h,j}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \frac{\sigma^{0,b}_i}{\eqp^b_i}
+	\frac{\partial Q^b_{ij}}{\partial \eqp^b_s} = -\delta_{ij}\sum_{k\neq i} \frac{\partial \eqp^b_k}{\partial \eqp^b_s} W_{ik} + (1-\delta_{ij})\delta_{is}W_{sj} = -\delta_{ij}(1-\delta_{is}) W_{is} + (1-\delta_{ij})\delta_{is}W_{sj}
 \end{equation}
-where $\sigma^{0,b}_i$ corresponds to state of the root sequence at position $b$.
-The corresponding derivative for the transition matrix $W_{rs}$ is
+Using this, we can now write
 \begin{equation}
-	\frac{\partial \log \LH}{\partial W_{ij}}= \sum_{k\in T} \frac{t_k}{W_{ij}} \sum_{a=1}^L\frac{\sum_{h}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}
+\begin{split}
+ \frac{\partial \log \LH}{\partial \eqp^{b}_s} &= \sum_{k\in T} t_k\mu^b \frac{\sum_{i,j,h}\sigma^{k,b}_i (-\delta_{ij}(1-\delta_{is}) W_{is} + (1-\delta_{ij})\delta_{is}W_{sj})e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \frac{\sigma^{0,b}_s}{\eqp^b_s} \\
+& =\sum_{k\in T} t_k\mu_b \frac{-\sum_{h,i\neq s}\sigma^{k,b}_i W_{is}e^{\mat{Q}^{b}t_k}_{ih} \rho^{k,b}_h + \sum_{h,j\neq s}\sigma^{k,b}_s W_{sj} e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \frac{\sigma^{0,b}_s}{\eqp^b_s}
+\end{split}
 \end{equation}
-The at an extremum, all these derivatives have to vanish.
-In addition we need to impose the normalization constraints which is done in the form of Lagrange multipliers such that the final conditions are
-\begin{eqnarray}
-	0 &=& \sum_{k\in T} t_k\frac{\vec{\sigma}^{k,b} \mat{Q}^{b} e^{\mat{Q}^{b}t} \vec{\rho}^{k,b}}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} \nonumber \\
-    0 &=& 	\sum_{k\in T} t_k\frac{\sum_{h,j}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t} \vec{\rho}^{k,b}} + \sigma^{0,b}_i + \lambda^{b}\eqp^b_i + \kappa \sum_j W_{ij}\eqp_i^{b}\eqp_j^{b} \nonumber\\
-	0 &=& \sum_{k\in T} t_k \sum_{a=1}^L\frac{\sum_{h}\sigma^{k,b}_i Q^{k,b}_{ih} e^{\mat{Q}^{b}t_k}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \kappa W_{ij}\sum_{b=1}^L \eqp^b_i\eqp^b_j
-\end{eqnarray}
-Summing the second and third equation over $i$ and $i,j$, respectively, and substituting the first equation, we find $\kappa=0$ and $\lambda^a=1$.
+where $\sigma^{0,b}_s$ corresponds to the distribution of states of the root sequence at position $b$.
+The corresponding derivative wrt to the transition matrix $W_{rs}$ has to account for the fact that $W_{ij}=W_{ji}$ and hence
+\begin{equation}
+\begin{split}
+\frac{\partial Q^b_{ij}}{\partial W_{rs}} & = \mu^b(1-\delta_{rs})(1-\delta_{ij})(p^b_r\delta_{ir}\delta_{js} + p^b_s\delta_{is}\delta_{jr}) - \mu_b\delta_{ij}(\sum_{h\neq i} p^b_h (\delta_{ir}\delta_{hs} + \delta_{is}\delta_{hr}) ) \\
+& = \mu^b(1-\delta_{rs})\left[(1-\delta_{ij})(p^b_r\delta_{ir}\delta_{js} + p^b_s\delta_{is}\delta_{jr}) - \delta_{ij}(p^b_s \delta_{ir} + p^b_r\delta_{is})\right]
+\end{split}
+\end{equation}
+We will not consider the case $r=s$ and drop the $1-\delta_{rs}$ condition.
+\begin{equation}
+\begin{split}
+	\frac{\partial \log \LH}{\partial W_{rs}} & = \sum_{k\in T} t_k \sum_{b=1}^L \mu^b \frac{\sum_{i,j,h}\sigma^{k,b}_i \left[(1-\delta_{ij})(p^b_r\delta_{ir}\delta_{js} + p^b_s\delta_{is}\delta_{jr}) - \delta_{ij}(p^b_s \delta_{ir} + p^b_r\delta_{is})\right] e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} \\
+	&= \sum_{k\in T} t_k \sum_{b=1}^L \mu^b \frac{\sum_{i,j,h}\sigma^{k,b}_i (1-\delta_{ij})(p^b_r\delta_{ir}\delta_{js} + p^b_s\delta_{is}\delta_{jr}) e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h
+	- \sum_{i,j,h}\sigma^{k,b}_i\delta_{ij}(p^b_s \delta_{ir} + p^b_r\delta_{is})e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}\\
+	&= \sum_{k\in T} t_k \sum_{b=1}^L \mu^b \frac{\sum_{h}\left[\sigma^{k,b}_r p^b_r e^{\mat{Q}^{b}t_k}_{sh} + \sigma^{k,b}_s p^b_s e^{\mat{Q}^{b}t_k}_{rh}\right] \rho^{k,b}_h
+	- \sum_{j,h}\sigma^{k,b}_j(p^b_s \delta_{jr} + p^b_r\delta_{js})e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}\\
+	&= \sum_{k\in T} t_k \sum_{b=1}^L \mu^b \frac{\sum_{h}\left[\sigma^{k,b}_r p^b_r e^{\mat{Q}^{b}t_k}_{sh} + \sigma^{k,b}_s p^b_s e^{\mat{Q}^{b}t_k}_{rh}\right] \rho^{k,b}_h
+	- \sum_{h} \left[\sigma^{k,b}_r p^b_s e^{\mat{Q}^{b}t_k}_{rh} + \sigma^{k,b}_s p^b_r e^{\mat{Q}^{b}t_k}_{sh}\right] \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}}
+\end{split}
+\end{equation}
+At an extremum, all these derivatives have to vanish -- after accounting for additional constraints due to normalization.
+In particular, we would like to enforce $\sum_i \eqp^b_i=0$ which results in the extramal condition
+\begin{equation}
+	0 = \eqp^b_s \sum_{k\in T} t_k \frac{-\sum_{h,i\neq s}\sigma^{k,b}_i W_{is}e^{\mat{Q}^{b}t_k}_{ih} \rho^{k,b}_h + \sum_{h,j\neq s}\sigma^{k,b}_s W_{sj} e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \sigma^{0,b}_s + \lambda^b \eqp^b_s
+\end{equation}
+To determine $\lambda^b$, we sum this over $s$.
+\begin{equation}
+\begin{split}
+	0 & = \sum_{k\in T} t_k \frac{-\sum_{h,s,i\neq s}\sigma^{k,b}_i \eqp^b_s W_{is}e^{\mat{Q}^{b}t_k}_{ih} \rho^{k,b}_h + \sum_{h,s, j\neq s}\sigma^{k,b}_s \eqp^b_s W_{sj} e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b \\
+	0 & = \sum_{k\in T} t_k \frac{\sum_{h,s,j\neq s} \left[-\sigma^{k,b}_j \eqp^b_s W_{js} + \sigma^{k,b}_s \eqp^b_s W_{sj}\right] e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b \\
+	0 & = \sum_{k\in T} t_k \frac{\sum_{h,s,j\neq s} \left[-\sigma^{k,b}_j + \sigma^{k,b}_s\right]  \eqp^b_s W_{sj}e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b \\
+	0 & = \sum_{k\in T} t_k \frac{\sum_{h,j,s\neq j} \left[-\sigma^{k,b}_j\eqp^b_s W_{sj} + \sigma^{k,b}_s\eqp^b_s W_{sj}\right]  e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b\\
+	0 & = \sum_{k\in T} t_k \frac{\sum_{h,j} \left[\sigma^{k,b}_jQ_{jj} + \sum_{s\neq j}\sigma^{k,b}_sQ_{sj}\right]  e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b\\
+	0 & = \sum_{k\in T} t_k \frac{\sum_{h,j,i} \sigma^{k,b}_i Q_{ij} e^{\mat{Q}^{b}t_k}_{jh} \rho^{k,b}_h}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + 1 + \lambda^b
+\end{split}
+\end{equation}
+The first term vanishes accoring to the extremal condition for $\mu^b$ and hence $\lambda_b=-1$.
+The other Lagrange parameter for $W_{ij}$ vanishes (I think) because there is no source associated with it.
+
+There is a general pattern here: All conditions consist of a positive and negative term that need to balance.
+The former is dominated by `off-diagonal' entries, i.e., when the overlap between $\sigma_i$ and $\rho_i$ is small, the latter by diagonal entries.
+The ratio of the two can be cast into a multiplicative update rule for the rates.
+
+
 
 To arrive at an iterative scheme to solve these equations, it is helpful to split the individuals terms into \emph{diagonal} contributions (the case in which the sequence does not change along a branch) and \emph{off-diagonal} contributions (substitutions happened on that branch).
 We will first consider the limit of short branches were we can approximate $e^{\mat{Q}^at}=\mat{I} + \mat{Q}^at$ and evaluate to leading order
@@ -112,10 +150,21 @@ In case $\sigma^{k,b}_i=\rho^{k,b}_i$ (no substitution on that branch), the deno
 If a substitution happened, numerator and denominator cancel with result 1.
 After summing over all branches, the condition for the mutation rate simplifies to
 \begin{equation}
-	\mu^b \sum_i \eqp_i^b W_{ij}T_j^b = \sum_{i\neq j} n_{ij}
+	\mu^b \sum_i \eqp_i^b W_{ij}T_j^b = \sum_{i\neq j} n^b_{ij}
 \end{equation}
-where $T_j^b$ is the sum of all $t_k$ were the sequence is in state $j$.
+where $T_j^b$ is the sum of all $t_k$ were the sequence is in state $j$ and $n^b_ij$ are the number of times a mutation from state $j$ to $i$ at position $b$ is observed.
 
+Going through the same manipulations for the conditions for optimal $\eqp^b_i$, we find
+\begin{equation}
+	\begin{split}
+& t_k\frac{\sum_{h,j}\sigma^{k,b}_i Q^{b}_{ih} e^{\mat{Q}^{b}t}_{hj} \rho^{k,b}_j}{\vec{\sigma}^{k,b} e^{\mat{Q}^{b}t_k} \vec{\rho}^{k,b}} + \sigma_i^{0,b}+\eqp_i^b \\
+&\approx t_k \frac{-\sum_{h}\sigma^{k,b}_i\mu^b p_h^b W_{ih} \rho^{k,b}_i + \sum_{j\neq i}\sigma^{k,b}_i \mu^b \eqp_i^b W_{ij} \rho^{k,b}_j}{\sum_{i} \sigma^{k,b}_i \rho^{k,b}_i + \sum_{i,j\neq i} \mu^b \sigma^{k,b}_i \eqp_i^b W_{ij}t_k \rho^{k,b}_j} + \sigma_i^{0,b}+\eqp_i^b
+	\end{split}
+\end{equation}
+This can be solved for $p_i^{b}$ as follows
+% \begin{equation}
+% 	p_i^b(\sum_{h,j\neq i}\eqp_h^b W_{ih}T_i + 1) = \sum_{j\neq i}\sigma^{k,b}_i p_i^h W_{ij} \rho^{k,b}_j}{}
+% \end{equation}
 
 
 \bibliography{GTRbib}
