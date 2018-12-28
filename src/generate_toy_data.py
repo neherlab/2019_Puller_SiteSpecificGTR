@@ -11,13 +11,16 @@ from treetime.seq_utils import seq2prof, profile_maps
 from betatree import betatree
 
 from filenames import *
+from estimation import get_mutation_count
 
 def save_model(gtr_model, fname):
     np.savez(fname, pi=gtr_model.Pi, mu=gtr_model.mu, W=gtr_model.W, alphabet=gtr_model.alphabet)
 
+
 def save_mutation_count(T, fname):
     n_ija,T_ia,root = get_mutation_count(T, T.gtr.alphabet)
     np.savez(fname, n_ija=n_ija, T_ia=T_ia, root_sequence=root)
+
 
 def load_mutation_count(fname):
     d = np.load(fname)
@@ -27,55 +30,6 @@ def load_mutation_count(fname):
 def load_model(fname):
     d = np.load(fname)
     return GTR_site_specific.custom(alphabet=d['alphabet'], mu=d['mu'], pi=d['pi'], W=d['W'])
-
-
-def get_mutation_count(tree, alphabet, marginal=False):
-    if marginal:
-        return get_marginal_mutation_count(tree, alphabet)
-    else:
-        return get_ML_mutation_count(tree, alphabet)
-
-
-def get_ML_mutation_count(tree, alphabet):
-    alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
-    L = tree.seq_len
-    q = len(alphabet)
-    positions = np.arange(L)
-    n_ija = np.zeros((q,q,L), dtype=int)
-    T_ia = np.zeros((q,L),dtype=float)
-    for n in tree.tree.get_nonterminals():
-        parent_profile = np.zeros(L, dtype=int)
-        for ai,a in enumerate(alphabet):
-            parent_profile[n.sequence==a] = ai
-
-        for c in n:
-            child_profile = np.zeros(L, dtype=int)
-            for ai,a in enumerate(alphabet):
-                child_profile[c.sequence==a] = ai
-
-            T_ia[parent_profile,positions] += 0.5*c.branch_length
-            T_ia[child_profile,positions] += 0.5*c.branch_length
-
-            n_ija[child_profile, parent_profile, positions] += (1-(parent_profile==child_profile))
-
-    return n_ija, T_ia, tree.tree.root.sequence
-
-
-def get_marginal_mutation_count(tree, alphabet):
-    alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
-    L = tree.seq_len
-    q = len(alphabet)
-    n_ija = np.zeros((q,q,L), dtype=float)
-    T_ia = np.zeros((q,L),dtype=float)
-    for n in tree.tree.get_nonterminals():
-        for c in n:
-            mut_stack = np.transpose(tree.get_branch_mutation_matrix(c, full_sequence=True), (2,1,0))
-            T_ia += c.branch_length * mut_stack.sum(axis=0)
-            T_ia += c.branch_length * mut_stack.sum(axis=1)
-
-            n_ija += mut_stack
-
-    return n_ija, T_ia, tree.tree.root.sequence
 
 
 def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
