@@ -13,7 +13,8 @@ if __name__ == '__main__':
     mu_vals = set()
     n_vals = set()
 
-    for fname in glob.glob('2018-12-17_simulated_data_results/*.pkl'):
+    # for fname in glob.glob('2018-12-17_simulated_data_results/*.pkl'):
+    for fname in glob.glob('2018-12-31_simulated_data_JC_results/*.pkl'):
         with open(fname, 'rb') as fh:
             tmp_mu_vals, tmp_n_vals, tmp_p_dist, tmp_mu_dist, tmp_W_dist, tmp_LH, tmp_avg_mu = pickle.load(fh)
 
@@ -37,13 +38,13 @@ if __name__ == '__main__':
     # and the substitution rates from the true frequencies and rates
     for n in n_vals:
         rtt = np.log(n)
-        plt.figure()
+        plt.figure(1)
         for label, data in p_dist.items():
             plt.errorbar(mu_vals*rtt, [np.mean(data[(L,n,mu)]) for mu in mu_vals],
                         [np.std(data[(L,n,mu)]) for mu in mu_vals], label=label)
 
         plt.yscale('log')
-        plt.legend()
+        #plt.legend()
         plt.xlabel('average root-to-tip distance')
         plt.ylabel('squared deviation')
 

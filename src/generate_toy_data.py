@@ -32,7 +32,7 @@ def load_model(fname):
     return GTR_site_specific.custom(alphabet=d['alphabet'], mu=d['mu'], pi=d['pi'], W=d['W'])
 
 
-def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
+def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False):
     from Bio import AlignIO
     # generate a model
     T = betatree(params['n'], alpha=2.0)
@@ -43,8 +43,13 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5):
 
     for mi in range(n_model):
         params['model']=mi
-        myGTR = GTR_site_specific.random(L=params['L'], alphabet='nuc_nogap')
+        if JC:
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet='nuc_nogap',
+                                             pi_dirichlet_alpha=0, W_dirichlet_alpha=0)
+        else:
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet='nuc_nogap')
         myGTR.mu*=params['m']
+
         if out_prefix:
             save_model(myGTR, model_name(out_prefix, params))
 
@@ -69,15 +74,21 @@ def reconstruct_tree(prefix, params):
 
 
 if __name__ == '__main__':
-    L=300
+    parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
+    parser.add_argument("-m", type=float, help="simulated mutation rate")
+    parser.add_argument("-n", type=int, help="number of taxa")
+    parser.add_argument("-L", type=int, default=300, help="length of sequence")
+    args=parser.parse_args()
 
-    prefix = '2018-12-17_simulated_data'
+    L=args.L
+
+    prefix = '2018-12-31_simulated_data_JC'
     if not os.path.isdir(prefix):
         os.mkdir(prefix)
 
-    for n in [1000]:
-        for mu in [0.25, 0.35, 0.5]: #[0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.5]:
-            for ti in range(3):
-                params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-                simplex(params, out_prefix=prefix, n_model=3, n_seqgen=3, yule=True)
+    n = args.n
+    mu = args.m
+    for ti in range(3):
+        params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
+        simplex(params, out_prefix=prefix, n_model=3, n_seqgen=3, yule=True, JC=True)
 

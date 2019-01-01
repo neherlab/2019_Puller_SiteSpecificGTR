@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument("-L", type=int, help="length of sequence")
     args=parser.parse_args()
 
-    prefix = '2018-12-26_simulated_data'
+    prefix = '2018-12-31_simulated_data_JC'
     mask = "/L{L}_n{n}_m{mu}_*fasta.gz".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
     files = glob.glob(prefix+mask)
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     analysis_types = ['naive', 'single', 'dressed', 'regular', 'phylo', 'marginal', 'true_model', 'iterative']
 
-    for fname in files[:1]:
+    for fname in files:
         print(fname)
 
         params = parse_alignment_name(fname)
@@ -75,8 +75,10 @@ if __name__ == '__main__':
                         bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
                         model = estimate_GTR(mc[0], pc=pc, single_site=False, bl=None)
                         if i:
-                            mu_num, mu_denom = exact_mu_update(mc[-1], 'nuc_nogap')
-                            model.mu *= mu_num/mu_denom
+                            (mu_denom, mu_num), (p_num, p_denom) = exact_mu_update(mc[-1], model.alphabet)
+                            model.mu = model.mu*(mu_num)/(mu_denom)
+                            print(mu_num[:5],mu_denom[:5], mu_num[:5]/mu_denom[:5], model.mu.mean())
+                            # model.Pi *= p_num/p_denom
                 else:
                     rec_model = {'true_model':true_model}
                     mc = reconstruct_counts(prefix, params, gtr=rec_model.get(ana, 'JC69'),
@@ -85,7 +87,8 @@ if __name__ == '__main__':
 
                     bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
 
-                model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single', bl=bl)
+                if ana!='iterative':
+                    model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single', bl=None)
                 avg_rate[ana][dset].append((true_model_average_rate, model.average_rate().mean()))
                 _mc, model_LH, _t = reconstruct_counts(prefix, params, gtr=model, alphabet='nuc_nogap',
                                                  marginal=True, reconstructed_tree=ana=='phylo')

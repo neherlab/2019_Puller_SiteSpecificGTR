@@ -106,10 +106,17 @@ def exact_mu_update(tree, alphabet):
     q = len(alphabet)
     mu_diag = np.zeros((L), dtype=float)
     mu_offdiag = np.zeros((L), dtype=float)
+
+    p_diag = np.zeros((q,L), dtype=float)
+    p_offdiag = np.zeros((q,L), dtype=float)
     for n in tree.tree.get_nonterminals():
         for c in n:
             (m1,m2), (p1,p2), (W1,W2) = tree.get_update_matrices(c)
+            # import ipdb; ipdb.set_trace()
             mu_diag += m1
             mu_offdiag += m2
 
-    return (mu_diag, mu_offdiag)
+            p_diag += p1
+            p_offdiag += p2
+
+    return (mu_diag, mu_offdiag), (p_diag, p_offdiag)
