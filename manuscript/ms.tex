@@ -1,0 +1,142 @@
+\documentclass[aps,rmp, onecolumn]{revtex4}
+%\documentclass[a4paper,10pt]{scrartcl}
+%\documentclass[aps,rmp,twocolumn]{revtex4}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,graphicx}
+\usepackage{color}
+%\usepackage{cite}
+
+\newcommand{\bq}{\begin{equation}}
+\newcommand{\eq}{\end{equation}}
+\newcommand{\bn}{\begin{eqnarray}}
+\newcommand{\en}{\end{eqnarray}}
+\newcommand{\Vadim}[1]{{\color{blue}Vadim: #1}}
+\newcommand{\Richard}[1]{{\color{red}Richard: #1}}
+\newcommand{\gene}[1]{{\it #1}}
+\newcommand{\mat}[1]{{\bf #1}}
+\newcommand{\vecb}[1]{{\bf #1}}
+\newcommand{\abet}{\mathcal{A}}
+\newcommand{\eqp}{p}
+\newcommand{\LH}{\mathcal{L}}
+\newcommand{\lh}{\ell}
+\pdfinfo{%
+  /Title    ()
+  /Author   ()
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+
+\begin{document}
+
+\title{Site-specific substitution model inference with iterative tree likelihood maximization.}
+\author{Vadim Puller$^{1,2,3}$ Pavel Sagulenko$^{1}$, Richard Neher$^{1,2,3}$}
+\affiliation{$^{1}$Max Planck Institute for Developmental Biology, 72076 T\"ubingen, Germany\\
+$^{2}$Biozentrum, University of Basel, Klingelbergstrasse 50/70, 4056 Basel, Switzerland\\
+$^{3}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland}
+
+\date{\today}
+
+\maketitle
+
+Most models of sequence evolution express the probability that sequence $\vec{s}$ evolved from sequence $\vec{r}$ in time $t$ as
+\bq
+P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s_{a},r_{a}}
+\label{eq:P_prob}
+\eq
+where $\mat{Q}^{a}$ is the substitution matrix governing evolution at site $i$, and $s_{a}$ and $r_{a}$ are the sequence states at position $i$.
+The product runs over all $L$ sites $a$ and amounts to assuming that different sites of the sequence evolve independently.
+
+In absence of recombination, homologous sequences are related by a tree and the likelihood of observing an alignment $\mat{A}=\{\vec{s^k}, k=1..n\}$ conditional on the tree $T$ and the substitution model $\mat{Q}^{a}$ can be written in terms of propagators defined in Eq.~\ref{eq:P_prob}.
+It is helpful to express this likelihood as product of sequence propagators defined in Eq.~\ref{eq:P_prob} between sequences at the ends of each branch in the tree (implicitly assuming that on different branches is independent and follows the same time reversible model).
+Unknown sequences of internal nodes $\{\vec{s}'\}$ need to be summed over and the likelihood can be expressed as
+\begin{equation}
+	\LH(\mat{A}|T,\mat{Q}) = \sum_{\{\vec{s}'\}}\prod_{a=1}^L \eqp^{a}_{x^{0}_a} \prod_{k\in T}P(\vec{s}_{k_c}\leftarrow \vec{s}_{k_p},t,\mat{Q}) = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})}  \ ,
+	\label{eq:LH}
+\end{equation}
+where $\vec{s}_{k_c}$ and $\vec{s}_{k_p}$ are the child and parent sequences of branch $k$, respectively, and the factor $\prod \eqp^{a}_{x^{0}_a}$ is the product of the probabilities of the root sequence $s^{0}_a$ over all positions $i$.
+The probabilities $\vec{\eqp}^{a}$ are the equiblirium probabilities of the substitution model at position $a$.
+The latter ensures that the likelihood is insensitive to a particular choice of the tree root.
+This equation defines the log-likelihood $\lh$ of a particular internal node assignment $\{\vec{s}'\}$ which is given by
+\begin{equation}
+	e^{\lh(\mat{A}, \{\vec{s}'\} |T, \mat{Q})} = \sum_a \left[\log(\eqp^a_{s^{0}_a}) + \sum_{k\in T} \log\left( e^{Q^at_k} \right)_{k^a_c, k^a_p}\right]
+\end{equation}
+where $k^a_c$ and $k^a_p$ are indices corresponding to the child and parent sequence of branch $k$.
+
+The sum over unknown ancestral sequences can be computed efficiently using standard dynamic programming techniques.
+Nevertheless, it requires $\mathcal{O}(n\times L \times q^2)$ operations (where $q$ is the size of the alphabet $\abet$) and optimizing it with respect to a large number of parameters is costly.
+Our goal here is to infer site-specific substitution models using a computationally efficient iterative procedure.
+
+Instead of inferring completely independent models for every site in the genome, we only allow for site specific rates and equilibrium frequencies while using the same transition matrix for every site.
+Such a site-specific general time-reversible (GTR)) model, can be parameterized as:
+\begin{eqnarray}
+Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
+Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki}
+\label{eq:Qij}
+\end{eqnarray}
+where $W_{ij}$ is a symmetric matrix with $W_{ii}=0$ and the second equation ensures conservation of probability.
+In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to ensure that the average rate per site is $\mu^{a}$.
+
+The derivatives of $\LH$ wrt to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need to vanish at the values that maximize $\LH$.
+\begin{equation}
+	\frac{\partial \LH(\mat{A}|T,\mat{Q})}{\partial X} = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})} \frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial X} = 0
+\end{equation}
+where $X$ is one of the parameters we vary.
+
+These conditions can be solved iteratively. We derive these update rule here $\mu^b$ and refer to the appendix for the other (more laborious) update rules.
+\begin{equation}
+	\frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} = \sum_{k\in T} \frac{t_k}{\mu^b}\frac{\sum_i Q^b_{k^b_c,i}\left( e^{Q^bt_k} \right)_{i, k^b_p}}{\left( e^{Q^bt_k} \right)_{k^b_c, k^b_p}}
+\end{equation}
+The individual terms in this sum behave very differently for cases where $k^b_c=k^b_p$ (no change at site $b$ on branch $k$) and $k^b_c\neq k^b_p$ (at least one mutation).
+In the limit of short branches $\mu^b t_k\ll 1$, we can expand the matrix exponential $e^{\mat{Q}t}=\delta_{ij} + \mat{Q}t+\cdots$ to obtain more insightful expressions and we will separate branches with $k^b_c=k^b_p$  and $k^b_c\neq k^b_p$ right away
+\begin{equation}
+\begin{split}
+	\frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} &\approx \sum_{k\in T, k^b_c=k^b_p} \frac{t_k}{\mu^b}\frac{\sum_i Q_{k^b,i}(\delta_{i,k^b} + t_k Q^b_{i,k^b}\cdots)}{1 - t_k\mu^b\sum_{j}\eqp_j W_{k^bj}+\ldots} +
+	\sum_{k\in T, k^b_c\neq k^b_p} \frac{t_k}{\mu^b}\frac{\sum_i Q_{k^b_c,i}(\delta_{i,k^b_p} + t_k Q^b_{i,k^b_p}\cdots)}{t_k\mu^b\eqp_{k^b_c} W_{k^b_ck^b_p}+\ldots} \\
+		&\approx -\sum_{k\in T, k^b_c=k^b_p}t_k \sum_i \eqp_{i}W_{i,k^b} +
+	\sum_{k\in T, k^b_c\neq k^b_p} \frac{t_k}{\mu^b}\frac{p_{k^b_c}W_{k^b_c, l^b_p} + \cdots}{t_k\eqp_{k^b_c} W_{k^b_ck^b_p}+\ldots} \\
+		&\approx -\sum_{k\in T, k^b_c=k^b_p}t_k \sum_i \eqp_{i}W_{i,k^b} + 	\sum_{k\in T, k^b_c\neq k^b_p} \frac{1}{\mu^b} \\
+		&= -\sum_{ij}\eqp_{i}W_{i,j}\langle T_j^b\rangle + \frac{1}{\mu^b}\sum_{ij} n^b_{ij}
+	\end{split}
+\end{equation}
+where $\langle T^b_j\rangle$ is the sum of all branch length along which site $b$ is in state $j$ and $n^b_{ij}$ is the number of times the sequences at site $b$ changes from $j$ to $i$ along branches of the tree.
+This condition (and the corresponding ones in the supplement suggest solution at fixed $\langle T^b_j\rangle$ and $n^b_{ij}$ using the following iterative update:
+\begin{equation}
+\label{eq:update}
+	\begin{split}
+		\mu^b & \leftarrow \mu^b\frac{\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\langle T_j^b\rangle} \\
+		\eqp^b_i & \leftarrow \eqp^b_i\frac{\sum_{j\neq i} n^b_{ij}+\delta_{is^{b}}}{\mu^b\sum_{j}\eqp^b_i W_{ij}\langle T_j^b\rangle + \eqp^b_i} \\
+		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\langle T_j^b\rangle + \eqp_j^b \langle T_i^b\rangle)} \\
+	\end{split}
+\end{equation}
+To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\langle T_j^b\rangle$ -- each appropriately summed over sites or states.
+
+The validity of this iterative solution will depend on the accuracy of the linear approximation made and the degree to which the ancestral states can be reconstructed or summed over.
+To assess these two sources of error independently, we simulated sequences evolving along a fixed tree and explicity recorded $n_{ij}^b$ and the $\langle T_j^b\rangle$ for a range of sample sizes, tree shapes, and branch lengths.
+Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \hat{\eqp}_i^a)^2$ where $\hat{\eqp}_i^a$ and $\hat{\eqp}_i^a$ the inferred and true equilibrium probabilities.
+
+
+\begin{figure}[tb]
+	\centering
+	% \includegraphics[]{}
+	\caption{Accuracy of iterative estimation as a function of the total tree length, i.e., the expected number of state changes along the tree. (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the number of observable mutations.
+	The estimates are vastly more accurate than naive estimates from the state frequencies in alignment columns.
+	(B) While the $\eqp_i^a$ are accurately inferred by the linearized additive procedure with known internal states, the mutation rates are systematically underestimated, as expected. }
+	\label{fig:dressed}
+\end{figure}
+
+Outside simulated sequences, the tree and the ancestral states at internal nodes are unknown and need to be reconstructed and summed over.
+In the spirit of iterative updates, we first reconstruct those states using a simple evolutionary model such as Jukes-Cantor model, use the resulting ancestral reconstruction to estimate a site-specific model using Eq.~\ref{eq:update}, which can then be used to estimate an improved reconstruction.
+Fig.~\ref{fig:reconstructed} shows model inference accuracy for reconstructed trees and sequences and compares them to the accuracy that would have been obtained if internal states had been known and the naive alignment frequencies.
+Model inference from reconstructed data is accurate the root to tip distance is small but rapidly looses accuracy if sequences are very diverged.
+
+
+
+
+
+\bibliography{GTRbib}
+
+\end{document}
