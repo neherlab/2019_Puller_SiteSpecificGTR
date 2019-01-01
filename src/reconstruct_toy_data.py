@@ -41,7 +41,7 @@ if __name__ == '__main__':
     pc=0.01
     niter=5
 
-    analysis_types = ['naive', 'single', 'dressed', 'regular', 'phylo', 'marginal', 'true_model', 'iterative']
+    analysis_types = ['naive', 'single', 'dressed', 'regular', 'marginal', 'true_model', 'iterative']
 
     for fname in files:
         print(fname)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
                     for i in range(niter):
                         mc = reconstruct_counts(prefix, params, gtr=model,
                                                 alphabet='nuc_nogap', marginal=True,
-                                                reconstructed_tree=False)
+                                                reconstructed_tree=True)
                         bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
                         model = estimate_GTR(mc[0], pc=pc, single_site=False, bl=None)
                         if i:
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                     rec_model = {'true_model':true_model}
                     mc = reconstruct_counts(prefix, params, gtr=rec_model.get(ana, 'JC69'),
                                             alphabet='nuc_nogap', marginal=ana in ['marginal', 'true_model', 'iterative'],
-                                            reconstructed_tree=ana=='phylo')
+                                            reconstructed_tree=ana!='dressed')
 
                     bl = [n.branch_length for n in mc[-1].tree.find_clades() if n!=mc[-1].tree.root]
 
