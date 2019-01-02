@@ -131,9 +131,13 @@ Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\ch
 Outside simulated sequences, the tree and the ancestral states at internal nodes are unknown and need to be reconstructed and summed over.
 In the spirit of iterative updates, we first reconstruct those states using a simple evolutionary model such as Jukes-Cantor model, use the resulting ancestral reconstruction to estimate a site-specific model using Eq.~\ref{eq:update}, which can then be used to estimate an improved reconstruction.
 Fig.~\ref{fig:reconstructed} shows model inference accuracy for reconstructed trees and sequences and compares them to the accuracy that would have been obtained if internal states had been known and the naive alignment frequencies.
-Model inference from reconstructed data is accurate the root to tip distance is small but rapidly looses accuracy if sequences are very diverged.
+Model inference from reconstructed data is accurate if the root to tip distance is small but rapidly looses accuracy if sequences are very diverged.
 
 
+\subsection*{Non-linear update rules}
+
+
+\subsection*{Applications to large HIV alignments}
 
 
 
