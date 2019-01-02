@@ -121,9 +121,10 @@ Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\ch
 
 \begin{figure}[tb]
 	\centering
-	% \includegraphics[]{}
+	\includegraphics[width=0.48\textwidth]{../figures/p_dist_vs_treelength.pdf}
+	\includegraphics[width=0.48\textwidth]{../figures/avg_rate_dressed.pdf}
 	\caption{Accuracy of iterative estimation as a function of the total tree length, i.e., the expected number of state changes along the tree. (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the number of observable mutations.
-	The estimates are vastly more accurate than naive estimates from the state frequencies in alignment columns.
+	The estimates are vastly more accurate than naive estimates from the state frequencies in alignment columns. Different curves are for $n\in [100,300,1000,3000]$ sequences.
 	(B) While the $\eqp_i^a$ are accurately inferred by the linearized additive procedure with known internal states, the mutation rates are systematically underestimated, as expected. }
 	\label{fig:dressed}
 \end{figure}
@@ -132,6 +133,13 @@ Outside simulated sequences, the tree and the ancestral states at internal nodes
 In the spirit of iterative updates, we first reconstruct those states using a simple evolutionary model such as Jukes-Cantor model, use the resulting ancestral reconstruction to estimate a site-specific model using Eq.~\ref{eq:update}, which can then be used to estimate an improved reconstruction.
 Fig.~\ref{fig:reconstructed} shows model inference accuracy for reconstructed trees and sequences and compares them to the accuracy that would have been obtained if internal states had been known and the naive alignment frequencies.
 Model inference from reconstructed data is accurate if the root to tip distance is small but rapidly looses accuracy if sequences are very diverged.
+
+\begin{figure}[tb]
+	\centering
+	\includegraphics[width=0.48\textwidth]{../figures/p_dist_vs_rtt.pdf}
+	\caption{At large root-to-tip distances, ancestral reconstruction becomes less and less accurate and estimation of equilibrium state frequencies fails. }
+	\label{fig:reconstructed}
+\end{figure}
 
 
 \subsection*{Non-linear update rules}

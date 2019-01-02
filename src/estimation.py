@@ -9,7 +9,7 @@ from treetime.seq_utils import seq2prof, profile_maps, alphabets
 from filenames import *
 
 def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
-    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
+    with open(alignment_name(in_prefix, params), 'rt') as fh:
         aln = AlignIO.read(fh, 'fasta')
 
     alpha = alphabets[alphabet]
@@ -22,7 +22,7 @@ def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
 
 def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap',
                        marginal=False, reconstructed_tree=False):
-    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
+    with open(alignment_name(in_prefix, params), 'rt') as fh:
         aln = AlignIO.read(fh, 'fasta')
     tree_fname =  reconstructed_tree_name(in_prefix, params) if reconstructed_tree else tree_name(in_prefix, params)
     myTree = TreeAnc(gtr=gtr, alphabet=alphabet,

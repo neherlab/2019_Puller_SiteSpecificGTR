@@ -35,7 +35,7 @@ def load_model(fname):
 def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False):
     from Bio import AlignIO
     # generate a model
-    T = betatree.betatree(params['n'], alpha=2.0)
+    T = betatree(params['n'], alpha=2.0)
     T.yule=yule
     T.coalesce()
     if out_prefix:
@@ -85,17 +85,19 @@ if __name__ == '__main__':
     parser.add_argument("-m", type=float, help="simulated mutation rate")
     parser.add_argument("-n", type=int, help="number of taxa")
     parser.add_argument("-L", type=int, default=300, help="length of sequence")
+    parser.add_argument("--JC", action='store_true', help="simulate JC model")
+    parser.add_argument("--prefix", type=str, help="folder to save data")
     args=parser.parse_args()
 
     L=args.L
 
-    prefix = '2018-12-31_simulated_data_JC'
+    prefix = args.prefix
     if not os.path.isdir(prefix):
         os.mkdir(prefix)
 
     n = args.n
     mu = args.m
-    for ti in range(3):
+    for ti in range(2):
         params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-        simplex(params, out_prefix=prefix, n_model=3, n_seqgen=3, yule=True, JC=False)
+        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC)
 
