@@ -42,6 +42,33 @@ $^{3}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland}
 
 \maketitle
 
+\section*{Introduction}
+Over time, genome sequences change through mutations and are reshuffeled by recombination.
+Modifications to the genomes are filtered by selection for survival such that beneficial variants spread preferentially and those that impair function are rare.
+As a result, some parts of genomes change rapidly, while other are strongly conserved.
+In addition to variation in rate, different sites in a genome only explore subsets of the available states.
+Some positions in a protein, for example, might only allow for hydrophobic amino acids, while other require acidic side chains.
+
+Phylogenetics aims at reconstructing the relationships and history of homologous sequences from the the substitutions that occurred in the past.
+Modern phylogenetic methods describe this stochastic evolutionary process with probabilistic models of sequence evolution and aim to find phylogenies that either maximize the likelihood of observing the alignment or sample phylogenies from a posterior probability distribution \citep{felsenstein2004inferring}.
+
+Inferring phylogenies is a computationally challenging problem since (i) the number of phylogenies grows super-exponentially with the number of taxa, (ii) calculation of the likelihood is compulationally costly (though linear in $n$), (iii) substitution models and the tree have many unknown continuous parameters that need estimation.
+Here, we will focus on the latter problem and describe ways to estimate substitution models in computationally efficient and economically parameterized form.
+
+The simplest substitution models assume that all sites and sequence states are equivalent and evolve at the same rate, i.e., they assume an unconstrained non-functional sequence that mutates at random between the different sequence states.
+Such simple models are clearly inadequate.
+But increasing the number of parameters, although improving the likelihood, does not necessarily increases the statistical/predictive power of the model \cite{scheffler2014validity}.
+In the context of the site-specific models this issue has become known as {\em extensive parametrization} or even {\em infinitely many parameters problem} \cite{felsenstein2001taking,Rodrigue557,kumar2011statistics,spielman2016extensively}.
+%
+A popular way to overcome this problem is by using mixture models, where every site is assigned to a category with its substitution rate drawn randomly from a statistical distribution assigned to this category \cite{blanquart2008site,mayrose2005gamma,jia2014impact,kosakovsky2004simple,le2012modeling,jayaswal2014mixture}.
+Although this significantly reduces the number of free parameters, choosing the number of the categories and specifying the corresponding statistical models remains rather arbitrary.
+
+Furthermore, rate variation is likely not the most crucial aspect at which positions in a protein differ.
+For the biological function of a protein, the properties of amino acids at different positions are crucial and experimentally measured amino-acid preferences at for each alignment column have been shown to greatly improve the phylogenetic fit \cite{bloom2014experimentally,bloom2014experimentally1}.
+
+
+
+\section{Methods}
 Most models of sequence evolution express the probability that sequence $\vec{s}$ evolved from sequence $\vec{r}$ in time $t$ as
 \bq
 P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s_{a},r_{a}}
@@ -80,6 +107,11 @@ Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki}
 where $W_{ij}$ is a symmetric matrix with $W_{ii}=0$ and the second equation ensures conservation of probability.
 In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to ensure that the average rate per site is $\mu^{a}$.
 
+% To regularize the parameter estimates when the data are not sufficiently informative to constrain them, we use Dirichlet and Gamma priors for $\eqp_i^a$ and $\mu^a$.
+% \begin{equation}
+% 	\log P(p_i^a) = C + (\alpha-1) \log \eqp_i^a \quad \mathrm{and} \quad \log P(\mu^a) = C -\frac{\beta \mu^a}{\bar{\mu}} + (\beta - 1)\log \mu^a
+% \end{equation}
+
 The derivatives of $\LH$ wrt to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need to vanish at the values that maximize $\LH$.
 \begin{equation}
 	\frac{\partial \LH(\mat{A}|T,\mat{Q})}{\partial X} = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})} \frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial X} = 0
@@ -107,16 +139,17 @@ This condition (and the corresponding ones in the supplement suggest solution at
 \begin{equation}
 \label{eq:update}
 	\begin{split}
-		\mu^b & \leftarrow \mu^b\frac{\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\langle T_j^b\rangle} \\
-		\eqp^b_i & \leftarrow \eqp^b_i\frac{\sum_{j\neq i} n^b_{ij}+\delta_{is^{b}}}{\mu^b\sum_{j}\eqp^b_i W_{ij}\langle T_j^b\rangle + \eqp^b_i} \\
+		\mu^b & \leftarrow \mu^b\frac{C+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\langle T_j^b\rangle} \\
+		\eqp^b_i & \leftarrow \eqp^b_i\frac{C+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(qC+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\langle T_j^b\rangle} \\
 		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\langle T_j^b\rangle + \eqp_j^b \langle T_i^b\rangle)} \\
 	\end{split}
 \end{equation}
+where $C$ is a pseudocount analogous to a Dirichlet prior that  in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $C$ over the total tree length.
 To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\langle T_j^b\rangle$ -- each appropriately summed over sites or states.
 
-The validity of this iterative solution will depend on the accuracy of the linear approximation made and the degree to which the ancestral states can be reconstructed or summed over.
+The validity of this iterative solution will depend on the accuracy of the linear approximation made, the degree to which the ancestral states can be reconstructed or summed over, and the accuracy of the tree reconstruction.
 To assess these two sources of error independently, we simulated sequences evolving along a fixed tree and explicity recorded $n_{ij}^b$ and the $\langle T_j^b\rangle$ for a range of sample sizes, tree shapes, and branch lengths.
-Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \hat{\eqp}_i^a)^2$ where $\hat{\eqp}_i^a$ and $\hat{\eqp}_i^a$ the inferred and true equilibrium probabilities.
+Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \eqp_i^a)^2$ where $\hat{\eqp}_i^a$ and $\hat{\eqp}_i^a$ the inferred and true equilibrium probabilities.
 
 
 \begin{figure}[tb]
@@ -131,13 +164,26 @@ Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\ch
 
 Outside simulated sequences, the tree and the ancestral states at internal nodes are unknown and need to be reconstructed and summed over.
 In the spirit of iterative updates, we first reconstruct those states using a simple evolutionary model such as Jukes-Cantor model, use the resulting ancestral reconstruction to estimate a site-specific model using Eq.~\ref{eq:update}, which can then be used to estimate an improved reconstruction.
-Fig.~\ref{fig:reconstructed} shows model inference accuracy for reconstructed trees and sequences and compares them to the accuracy that would have been obtained if internal states had been known and the naive alignment frequencies.
-Model inference from reconstructed data is accurate if the root to tip distance is small but rapidly looses accuracy if sequences are very diverged.
+
+Fig.~\ref{fig:reconstructed}A shows model inference accuracy for reconstructed trees (using iq-tree) and ancestral sequence inferred by TreeTime using a Jukes-Cantor model.
+The estimates of $\eqp_i^a$ are about as accurate as those inferred from the true ancestral states und the root-to-tip distance reaches about 0.3 but then start to deteriorate and are eventually even worse than the naive estimates from the alignment.
+This accuracy can be improved moderately by summing over uncertainty of the ancestral reconstruction.
+
+A more substantial improvment in accuracy can be obtained when the inferred model is used to re-infer the ancestral states, followed by repeated model inference.
+With this iterative procedure, model accuracy is comparable to that with known ancestral states up to root-to-tip distance of about 1.0.
+
+In absense of strong regularization, maximum likelihood estimates of site specific equilibrium probabilities tend to `overfit' the data when the total number of observed mutations is low.
+This is reflected in Fig.~\ref{fig:reconstructed}B showing the different in entropy $-\sum_i \eqp_i^a \log \eqp_i^a$ of the inferred and true distributions.
+At low root-to-tip distances, the inferred distributions have too little entropy, meaning they are too concentrates on the few states that are observed.
+This effect, however, is much less pronounced in the tree based inference compared to naive estimates directly from the alignment.
+At very large root-to-tip distances, both the naive and the estimate based on true ancestral states become unbiased, while the model inference based on reconstructions results in broader $\eqp_i^a$ with higher entropy.
+
 
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.48\textwidth]{../figures/p_dist_vs_rtt.pdf}
-	\caption{At large root-to-tip distances, ancestral reconstruction becomes less and less accurate and estimation of equilibrium state frequencies fails. }
+	\includegraphics[width=0.48\textwidth]{../figures/p_entropy_vs_rtt.pdf}
+	\caption{Ancestral reconstruction: (A) At large root-to-tip distances, ancestral reconstruction becomes less and less accurate and estimation of equilibrium state frequencies fails. (B) For closely related sequences, the estimated equilibrium frequencies tend to be too concentrated in a few sites (low entropy), while at very large root-to-tip distances the estimates are too flat (high entropy). }
 	\label{fig:reconstructed}
 \end{figure}
 

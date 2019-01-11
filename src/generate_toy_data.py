@@ -61,19 +61,19 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
 
             if out_prefix:
                 save_mutation_count(mySeq, mutation_count_name(out_prefix, params))
-                with open(alignment_name(out_prefix, params), 'wt') as fh:
+                with open(alignment_name_raw(out_prefix, params), 'wt') as fh:
                     AlignIO.write(mySeq.get_aln(), fh, 'fasta')
                 reconstruct_tree(out_prefix, params)
 
 
 def reconstruct_tree(prefix, params):
-    aln_file = alignment_name(prefix, params)
+    aln_file = alignment_name_raw(prefix, params)
     fast_opts = [
         "-ninit", "2",
         "-n",     "2",
         "-me",    "0.05"
     ]
-    call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'GTR',
+    call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'GTR+G10',
             ">", "iqtree.log"]
     os.system(" ".join(call))
     os.system("mv %s.treefile %s"%(aln_file, reconstructed_tree_name(prefix, params)))

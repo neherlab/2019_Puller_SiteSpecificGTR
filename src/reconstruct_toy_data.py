@@ -40,10 +40,10 @@ if __name__ == '__main__':
     mu_vals = set()
     n_vals = set()
 
-    pc=0.01
+    pc=0.5
     niter=5
 
-    analysis_types = ['naive', 'single', 'dressed', 'regular', 'marginal', 'true_model']
+    analysis_types = ['naive', 'single', 'dressed', 'regular', 'regular_true', 'marginal','marginal_true', 'iterative', 'iterative_true']
 
     for fname in files:
         print(fname)
@@ -57,35 +57,44 @@ if __name__ == '__main__':
         true_mut_counts = load_mutation_count(mutation_count_name(prefix, params))
         dset = (params['L'], params['n'], params['m'])
 
-        _mc, true_LH, _t = reconstruct_counts(prefix, params, gtr=true_model, alphabet='nuc_nogap',
+        _mc, true_LH, true_tree = reconstruct_counts(prefix, params, gtr=true_model, alphabet='nuc_nogap',
                                               marginal=True, reconstructed_tree=False)
-
+        true_tree_length = true_tree.tree.total_branch_length()
         for ana in analysis_types:
             if ana=='naive':
                 naive = p_from_aln(prefix, params)
                 p_dist[ana][dset].append(np.mean([chisq(naive[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+                p_entropy[ana][dset].append([-np.mean(np.sum(naive*np.log(naive+1e-10), axis=0)),
+                                            -np.mean(np.sum(true_model.Pi*np.log(true_model.Pi), axis=0))])
             else:
                 if ana=='dressed':
                     mc = (true_mut_counts, None, None)
                     bl = [n.branch_length for n in _t.tree.find_clades() if n!=_t]
-                elif ana=='iterative':
+                elif ana in ['iterative', 'iterative_true']:
                     model = 'JC69'
                     for i in range(niter):
                         mc = reconstruct_counts(prefix, params, gtr=model,
                                                 alphabet='nuc_nogap', marginal=True,
-                                                reconstructed_tree=True)
+                                                reconstructed_tree=ana=='iterative')
                         model = estimate_GTR(mc[0], pc=pc, single_site=False)
-                        if i:
-                            (mu_denom, mu_num), (p_num, p_denom) = exact_mu_update(mc[-1], model.alphabet)
-                            model.mu = model.mu*(mu_num)/(mu_denom)
-                            # model.Pi *= p_num/p_denom
+                        print(i, np.mean([chisq(model.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+                elif ana=='branch_length':
+                    model = 'JC69'
+                    kappa=1.0
+                    print(true_model.mu[:5])
+                    for i in range(niter):
+                        mc = reconstruct_counts(prefix, params, gtr=model,
+                                                alphabet='nuc_nogap', marginal=True,
+                                                reconstructed_tree=False)
+                        model = estimate_GTR(mc[0], pc=pc, single_site=False, tt=mc[-1] if i else None)
+                        mc[-1].set_gtr(model)
                 else:
                     rec_model = {'true_model':true_model}
                     mc = reconstruct_counts(prefix, params, gtr=rec_model.get(ana, 'JC69'),
                                             alphabet='nuc_nogap', marginal=ana in ['marginal', 'true_model', 'iterative'],
-                                            reconstructed_tree=True)
+                                            reconstructed_tree=('true' not in ana))
 
-                if ana!='iterative':
+                if ana not in ['iterative', 'branch_length']:
                     model = estimate_GTR(mc[0], pc=pc, single_site=ana=='single')
                 avg_rate[ana][dset].append((true_model_average_rate, model.average_rate().mean()))
                 _mc, model_LH, _t = reconstruct_counts(prefix, params, gtr=model, alphabet='nuc_nogap',
@@ -101,7 +110,7 @@ if __name__ == '__main__':
                 np.fill_diagonal(model.W,0)
                 W_dist[ana][dset].append(chisq(model.W.flatten(), true_model.W.flatten()))
 
-    out_prefix = prefix + '_results/'
+    out_prefix = prefix + '_results_pc_%1.1f/'%pc
     if not os.path.isdir(out_prefix):
         os.mkdir(out_prefix)
 

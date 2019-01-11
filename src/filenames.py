@@ -27,6 +27,9 @@ def mutation_count_name(prefix, params):
 def alignment_name(prefix, params):
     return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}.fasta.gz'.format(**params)
 
+def alignment_name_raw(prefix, params):
+    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}.fasta'.format(**params)
+
 def tree_name(prefix, params):
     return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}.nwk'.format(**params)
 
