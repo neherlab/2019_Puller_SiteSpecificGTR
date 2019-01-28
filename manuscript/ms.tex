@@ -66,9 +66,16 @@ Although this significantly reduces the number of free parameters, choosing the 
 Furthermore, rate variation is likely not the most crucial aspect at which positions in a protein differ.
 For the biological function of a protein, the properties of amino acids at different positions are crucial and experimentally measured amino-acid preferences at for each alignment column have been shown to greatly improve the phylogenetic fit \cite{bloom2014experimentally,bloom2014experimentally1}.
 
+\citep{felsenstein1981evolutionary}
+
+More than two decades ago, \citet{halpern_evolutionary_1998} pointed out that ignoring that equilibrium frequencies vary from one position to another will result in underestimation of branch lengths of a phylogeny -- possibly dramatically when frequencies are heavily skewed.
+Nevertheless, most phylogenetic inference assumes uniform frequencies across sites and only models rate variation.
+\citet{hilton_modeling_2018} recently showed that experimentally measured preference not only improve the phylogenetic fit, but also results in longer branch length estimates.
+We show here that this effect is dramatic and can result in complete insensitivity of the likelihood to the actual branch length.
+Hence site-specific models are not only interesting to learn about functional constraints of biological sequence, but might also be crucial to properly reconstruct the phylogenies.
 
 
-\section{Methods}
+\section*{Efficient inference of site specific substitution models}
 Most models of sequence evolution express the probability that sequence $\vec{s}$ evolved from sequence $\vec{r}$ in time $t$ as
 \bq
 P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s_{a},r_{a}}
@@ -97,7 +104,7 @@ The sum over unknown ancestral sequences can be computed efficiently using stand
 Nevertheless, it requires $\mathcal{O}(n\times L \times q^2)$ operations (where $q$ is the size of the alphabet $\abet$) and optimizing it with respect to a large number of parameters is costly.
 Our goal here is to infer site-specific substitution models using a computationally efficient iterative procedure.
 
-Instead of inferring completely independent models for every site in the genome, we only allow for site specific rates and equilibrium frequencies while using the same transition matrix for every site.
+Instead of inferring completely independent models for every site in the genome, we follow \citet{halpern_evolutionary_1998} and only allow for site specific rates and equilibrium frequencies while using the same transition matrix for every site.
 Such a site-specific general time-reversible (GTR)) model, can be parameterized as:
 \begin{eqnarray}
 Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
@@ -112,6 +119,7 @@ In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W
 % 	\log P(p_i^a) = C + (\alpha-1) \log \eqp_i^a \quad \mathrm{and} \quad \log P(\mu^a) = C -\frac{\beta \mu^a}{\bar{\mu}} + (\beta - 1)\log \mu^a
 % \end{equation}
 
+\subsection*{Iterative Likelihood maximation}
 The derivatives of $\LH$ wrt to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need to vanish at the values that maximize $\LH$.
 \begin{equation}
 	\frac{\partial \LH(\mat{A}|T,\mat{Q})}{\partial X} = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})} \frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial X} = 0
@@ -147,11 +155,6 @@ This condition (and the corresponding ones in the supplement suggest solution at
 where $C$ is a pseudocount analogous to a Dirichlet prior that  in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $C$ over the total tree length.
 To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\langle T_j^b\rangle$ -- each appropriately summed over sites or states.
 
-The validity of this iterative solution will depend on the accuracy of the linear approximation made, the degree to which the ancestral states can be reconstructed or summed over, and the accuracy of the tree reconstruction.
-To assess these two sources of error independently, we simulated sequences evolving along a fixed tree and explicity recorded $n_{ij}^b$ and the $\langle T_j^b\rangle$ for a range of sample sizes, tree shapes, and branch lengths.
-Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \eqp_i^a)^2$ where $\hat{\eqp}_i^a$ and $\hat{\eqp}_i^a$ the inferred and true equilibrium probabilities.
-
-
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.48\textwidth]{../figures/p_dist_vs_treelength.pdf}
@@ -162,21 +165,27 @@ Fig.~\ref{fig:dressed} shows the accuracy of the inference as quantified by $\ch
 	\label{fig:dressed}
 \end{figure}
 
+\subsection*{Model inference accuracy}
+
+The validity of this iterative solution will depend on the accuracy of the linear approximation made, the degree to which the ancestral states can be reconstructed or summed over, and the accuracy of the tree reconstruction.
+To assess these three sources of error independently, we simulated sequences evolving along a fixed tree and explicity recorded $n_{ij}^b$ and the $\langle T_j^b\rangle$ for a range of sample sizes, tree shapes, and branch lengths.
+We quantify the accuracy of the inference as $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \eqp_i^a)^2$ where $\hat{\eqp}_i^a$ and $\hat{\eqp}_i^a$ are the inferred and true equilibrium probabilities and compare inference using (i) the true ancestral sequences, (ii) reconstructed ancestral sequences, and (iii) reconstructions on the true phylogenetic tree.
+
+In the case of simulation data, we can calculate the $n^b_{ij}$ and $\langle T_i^b\rangle$ needed for the iterative optimization directly from the tree and the associated ancestral sequences.
+This allows us to test the effect of the linear approximation directly.
+Fig.~\ref{fig:dressed} shows $\chi^2$ for a trees with $n\in [100,300,1000,3000]$ taxa and a range of substitution rates as a function of the expected number of substitutions per site.
+The plot is shown on double logarithmic scales, such that the approximatly straight decrease of $\chi^2$ implies that the accuracy is inversely proportional to the expected number of substitutions.
+This scaling suggests that accuracy is limited by the inherent stochasticity of the evolutionary process and that the inference uses all available information efficiently.
+The linear approximation does not seem to affect the estimation of the equilibrium frequencies much.
+By contrast, using the frequencies of different sequences states in the alignment as estimates for $\eqp_i^b$ is much less accurate due to the correlation induced by shared ancestry.
+
+The accuracy of substitution rates, however, is affected by linearization and we consistently underestimate $\mu^b$, see Fig.~\ref{fig:dressed}B.
+This is expected as the linearlized update ignores cases where the same site changes twice along a branch.
+We will see later that the linear substitution model inference followed by full non-linear branch length optimization rectifies this problem.
+
 Outside simulated sequences, the tree and the ancestral states at internal nodes are unknown and need to be reconstructed and summed over.
-In the spirit of iterative updates, we first reconstruct those states using a simple evolutionary model such as Jukes-Cantor model, use the resulting ancestral reconstruction to estimate a site-specific model using Eq.~\ref{eq:update}, which can then be used to estimate an improved reconstruction.
-
-Fig.~\ref{fig:reconstructed}A shows model inference accuracy for reconstructed trees (using iq-tree) and ancestral sequence inferred by TreeTime using a Jukes-Cantor model.
-The estimates of $\eqp_i^a$ are about as accurate as those inferred from the true ancestral states und the root-to-tip distance reaches about 0.3 but then start to deteriorate and are eventually even worse than the naive estimates from the alignment.
-This accuracy can be improved moderately by summing over uncertainty of the ancestral reconstruction.
-
-A more substantial improvment in accuracy can be obtained when the inferred model is used to re-infer the ancestral states, followed by repeated model inference.
-With this iterative procedure, model accuracy is comparable to that with known ancestral states up to root-to-tip distance of about 1.0.
-
-In absense of strong regularization, maximum likelihood estimates of site specific equilibrium probabilities tend to `overfit' the data when the total number of observed mutations is low.
-This is reflected in Fig.~\ref{fig:reconstructed}B showing the different in entropy $-\sum_i \eqp_i^a \log \eqp_i^a$ of the inferred and true distributions.
-At low root-to-tip distances, the inferred distributions have too little entropy, meaning they are too concentrates on the few states that are observed.
-This effect, however, is much less pronounced in the tree based inference compared to naive estimates directly from the alignment.
-At very large root-to-tip distances, both the naive and the estimate based on true ancestral states become unbiased, while the model inference based on reconstructions results in broader $\eqp_i^a$ with higher entropy.
+We used the simulated sequence alignments to reconstruct phylogenetic trees with IQ-tree \citep{nguyen_iq-tree:_2015} using a GTR model with ten rate categories.
+In the spirit of iterative updates, we reconstructed the ancestral states of the inferred tree using the simplest evolutionary model (Jukes-Cantor model) and calculated $n^b_{ij}$ and $\langle T_i^b\rangle$ from this reconstruction.
 
 
 \begin{figure}[tb]
@@ -188,12 +197,58 @@ At very large root-to-tip distances, both the naive and the estimate based on tr
 \end{figure}
 
 
-\subsection*{Non-linear update rules}
+Fig.~\ref{fig:reconstructed}A shows model inference accuracy for reconstructed trees and ancestral sequence inferred by TreeTime using a Jukes-Cantor model (line labeled 'reconstructed').
+The estimates of $\eqp_i^a$ are about as accurate as those inferred from the true ancestral states until the root-to-tip distance reaches about 0.2 but then start to deteriorate.
+Eventually, the estimates are even worse than the naive estimates from the alignment.
+This accuracy can be improved moderately by summing over uncertainty of the ancestral reconstruction (line labeled `ancestral sum').
+
+A more substantial improvment in accuracy can be obtained when the inferred model is used to re-infer the ancestral states, followed by repeated model inference.
+With this iterative procedure, model accuracy is comparable to that with known ancestral states up to root-to-tip distance of about 1.0.
+At longer still longer root to tip distances, extensize evolution results in inaccurate tree reconstruction.
+If, instead of the reconstructed tree, we supply the true simulated tree to the reconstruction algorithm, accuracy continues to improve even at root-to-tip distances greater than 1.0, see Fig.~\ref{fig:reconstructed}.
+
+In absense of strong regularization, maximum likelihood estimates of site specific equilibrium probabilities tend to `overfit' the data when the total number of observed mutations is low.
+This is reflected in Fig.~\ref{fig:reconstructed}B showing the different in entropy $-\sum_i \eqp_i^a \log \eqp_i^a$ of the inferred and true distributions.
+When the regularizing pseudo-count is low ($C=0.1$), the inferred distributions have too little entropy, meaning they are too concentrated on the few states that are observed.
+This effect, however, is much less pronounced in the tree based inference compared to naive estimates directly from the alignment.
+As the pseudo-count increases, this bias goes away, but in practice the necessary degree of regularization (i.e. the appropriate prior) is unknown.
+At very large root-to-tip distances, the model inference based on reconstructions results in slightly broader $\eqp_i^a$ with higher entropy.
+
+\begin{figure}[tb]
+	\centering
+	\includegraphics[width=0.48\textwidth]{average_branch_length}
+	\includegraphics[width=0.48\textwidth]{root_to_tip_distance}
+	\caption{{\bf Skewed equilibrium concentration results in branch length under estimates}.
+	Panel A shows the inferred average branch length as estimated by IQ-Tree and TreeTime as a function of the true average branch length. Panel B shows the results of the same optimization for the average root-to-tip distance.}
+	\label{fig:tree_length}
+\end{figure}
+
+\subsection*{Ignoring site specific frequencies dramatically underestimate branch length}
+As previously observed by various authors \citet{halpern_evolutionary_1998,hilton_modeling_2018}, sites with heavily skewed preferences for specific states result in branch length underestimation if uniform equilibrium frequencies are assumed.
+This is a straightforward consequence of the fact that the probability of observing the same state at random is $\sum_i{\eqp_i^b}^2$ is increasing sharpely with the skew.
+Models that don't account for site specific frequencies will take a large number of sites that agree between two sequences as evidence for their close evolutionary relationship, while it is simply a consequence of resampling the same states with high probability.
+
+Fig.~\ref{fig:tree_length} shows the average branch length (panel A) and the root-to-tip distance of trees reconstructed using IQ-tree (panel B) for models where $p_i^b$ are drawn from a uniform distribution on the $(q-1)$ simplex (Dirichlet parameter $\alpha=0$) and a model where all $\eqp_i^b=q^{-1}$.
+While branch length are accurately estimated for the latter, they are systematically underestimated for the former.
+This effect is particularly severe for the root-to-tip distance which is dominated by long branches deep in the phylogeny.
+Here, the inferred root-to-tip distance is essentially uncoupled from the true value for distance greater than 1.
+This effect is entirely due to skewed equilbrium frequencies, as branch length inference by IQ-tree is accurate if the simulated data had flat $\eqp_i^b=q^{-1}$.
+
+This problem is rectified to a large degree when branch length are optimized using the inferred model.
+
 
 
 \subsection*{Applications to large HIV alignments}
 
 
+\section*{Discussion}
+
+\begin{itemize}
+	\item underestimation of long branches, dubious deep time trees
+	\item relation to frequent reversions
+	\item fitness inference, functional constraints
+	\item caveat about interactions
+\end{itemize}
 
 \bibliography{GTRbib}
 

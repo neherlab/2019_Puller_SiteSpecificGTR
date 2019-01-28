@@ -3,9 +3,10 @@ import numpy as np
 from collections import defaultdict
 
 fmts = ['.png', '.pdf']
+fs = 12
 
-labels = {'naive':"Alignment frequencies", "dressed":"Inference from true substitution counts", "regular":"Reconstructed",
-          "marginal":"ancestral sum", "iterative":"Iterated", 'branch_length':"non-linear",
+labels = {'naive':"Alignment frequencies", "dressed":"True substitution counts", "regular":"Reconstructed",
+          "marginal":"ancestral sum", "iterative":"Iterative, reconstructed tree", 'branch_length':"non-linear",
           "iterative_true":"iterative, true tree", 'marginal_true':"ancestral sum, true tree"}
 colors = {k:'C%d'%(i+1) for i,k in enumerate(sorted(labels.keys()))}
 
@@ -61,9 +62,11 @@ def plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=None, fname=None):
     plt.plot([10,1000], [0.1,0.001], label=r'$\sim x^{-1}$', c='k')
     plt.yscale('log')
     plt.xscale('log')
-    plt.legend()
-    plt.xlabel('average number of substitutions per site')
-    plt.ylabel('squared deviation of $p_i^a$')
+    plt.legend(fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.xlabel('average number of substitutions per site', fontsize=fs)
+    plt.ylabel('squared deviation of $p_i^a$', fontsize=fs)
+    plt.tight_layout()
 
     if fname:
         for fmt in fmts:
@@ -88,33 +91,39 @@ def plot_pdist_vs_rtt(data, n_vals, mu_vals, methods=None, fname=None):
 
     plt.yscale('log')
     plt.xscale('log')
-    plt.legend()
-    plt.xlabel('root-to-tip distance')
-    plt.ylabel('squared deviation')
+    plt.legend(fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.xlabel('root-to-tip distance', fontsize=fs)
+    plt.ylabel('squared deviation', fontsize=fs)
+    plt.tight_layout()
 
     if fname:
         for fmt in fmts:
             plt.savefig(fname+fmt)
 
 
-def plot_pentropy_vs_rtt(data, n_vals, mu_vals, methods=None, fname=None):
+def plot_pentropy_vs_rtt(data, n_vals, mu_vals, pc_vals, methods=None, fname=None):
     # for each data set size, plot the difference in entropy between the inferred and true
     # equilibrium frequencies.
-
+    line_styles = ['--','-.','-']
     plt.figure()
     for n in n_vals:
         rtt = np.log(n)
-        for label, d in data['S'].items():
-            if methods and label not in methods:
-                continue
-            plt.errorbar(mu_vals*rtt, [-np.mean(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
-                        [np.std(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
-                        c=colors[label], label=labels[label] if n==n_vals[0] else '')
+        for pi,pc in enumerate(pc_vals):
+            for label, d in data[pc]['S'].items():
+                if methods and label not in methods:
+                    continue
+                plt.errorbar(mu_vals*rtt, [-np.mean(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
+                            [np.std(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
+                            c=colors[label], ls=line_styles[pi],
+                            label=labels[label] if n==n_vals[0] and pc==pc_vals[-1] else '')
 
     plt.xscale('log')
-    plt.legend()
-    plt.xlabel('root-to-tip distance')
-    plt.ylabel('entropy difference (inferred-true)')
+    plt.legend(fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.xlabel('root-to-tip distance', fontsize=fs)
+    plt.ylabel('entropy difference (inferred-true)', fontsize=fs)
+    plt.tight_layout()
 
     if fname:
         for fmt in fmts:
@@ -132,9 +141,11 @@ def plot_avg_rate(data, n_vals, mu_vals, methods=None, fname=None):
                       c=colors[label], label=labels[label] if n==n_vals[0] else '')
 
     plt.plot([0, 0.35], [0, 0.35], c='k', label='correct')
-    plt.legend()
-    plt.xlabel('average substitution rate')
-    plt.ylabel('inferred substitution rate')
+    plt.legend(fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.xlabel('average substitution rate', fontsize=fs)
+    plt.ylabel('inferred substitution rate', fontsize=fs)
+    plt.tight_layout()
 
     if fname:
         for fmt in fmts:
@@ -152,10 +163,12 @@ def plot_site_specific_rate_dist(data, n_vals, mu_vals, methods=None, fname=None
                         [np.std(d[(L,n,mu)])/L for mu in mu_vals],
                          c=colors[label], label=labels[label] if n==n_vals[0] else '')
 
-        plt.yscale('log')
-        plt.legend()
-        plt.xlabel('average root-to-tip distance')
-        plt.ylabel('relative squared deviation of site specific rates')
+    plt.yscale('log')
+    plt.legend(fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.xlabel('average root-to-tip distance', fontsize=fs)
+    plt.ylabel('relative squared deviation of site specific rates', fontsize=fs)
+    plt.tight_layout()
 
     if fname:
         for fmt in fmts:
@@ -165,27 +178,33 @@ def plot_site_specific_rate_dist(data, n_vals, mu_vals, methods=None, fname=None
 if __name__ == '__main__':
 
     from matplotlib import pyplot as plt
-    L=1000
-    data, n_vals, mu_vals = load_toy_data_results('2019-01-10_simulated_data_L1000_results_pc_0.5/')
+    data = {}
 
+    L=1000
+    for pc in [0.1, 0.5, 1.0]:
+        tmp, n_vals, mu_vals = load_toy_data_results('2019-01-12_simulated_data_L1000_aa_results_pc_%1.1f/'%pc)
+        data[pc]=tmp
+
+    pc_general = 0.1
     ####
-    plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=['naive', 'dressed'],
+    plot_pdist_vs_tree_length(data[pc_general], n_vals, mu_vals, methods=['naive', 'dressed'],
                         fname='figures/p_dist_vs_treelength')
-    plot_avg_rate(data, [3000], mu_vals, methods=['dressed', 'branch_length'],
+    plot_avg_rate(data[pc_general], [3000], mu_vals, methods=['dressed', 'branch_length'],
                         fname='figures/avg_rate_dressed')
 
     ####
-    plot_pdist_vs_rtt(data, [3000], mu_vals,
+    plot_pdist_vs_rtt(data[pc_general], [3000], mu_vals,
                       methods=['naive', 'dressed', 'regular', 'marginal','iterative',
                                'iterative_true'],
                       fname='figures/p_dist_vs_rtt')
 
-    plot_site_specific_rate_dist(data, [3000], mu_vals,
+    plot_site_specific_rate_dist(data[pc_general], [3000], mu_vals,
                       methods=['naive', 'dressed', 'regular', 'marginal', 'iterative',
                                 'iterative_true'],
                       fname='figures/mu_dist_vs_rtt')
 
-    plot_pentropy_vs_rtt(data, [3000], mu_vals, methods=['naive', 'dressed', 'marginal', 'iterative','iterative_true'],
+    plot_pentropy_vs_rtt(data, [3000], mu_vals, pc_vals=[0.1, 0.5, 1.0],
+                         methods=['naive', 'dressed', 'iterative'],
                          fname='figures/p_entropy_vs_rtt')
 
     # for each data set size, plot the distance of the inferred equilibrium frequencies

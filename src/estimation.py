@@ -28,7 +28,11 @@ def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap',
         with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
             aln = AlignIO.read(fh, 'fasta')
         tree_fname =  reconstructed_tree_name(in_prefix, params) if reconstructed_tree else tree_name(in_prefix, params)
-        myTree = TreeAnc(gtr=gtr, alphabet=alphabet,
+        if type(gtr)==str:
+            tmp_GTR = GTR.standard(gtr, alphabet=alphabet)
+        else:
+            tmp_GTR=gtr
+        myTree = TreeAnc(gtr=tmp_GTR, alphabet=alphabet,
                          tree=tree_fname, aln=aln,
                          reduce_alignment=False, verbose = 0)
 
@@ -41,17 +45,17 @@ def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap',
     return mutation_counts, myTree.sequence_LH(), myTree
 
 
-def estimate_GTR(mutation_counts, pc=0.1, single_site=False, tt=None):
+def estimate_GTR(mutation_counts, pc=0.1, single_site=False, tt=None, alphabet='nuc_nogap'):
     n_ija, T_ia, root_sequence = mutation_counts[:3]
-    root_prof = seq2prof(root_sequence, profile_maps['nuc_nogap']).T
+    root_prof = seq2prof(root_sequence, profile_maps[alphabet]).T
 
 
     if single_site:
         inferred_model = GTR.infer(n_ija.sum(axis=-1), T_ia.sum(axis=-1), pc=pc,
-                          root_state=root_prof.sum(axis=-1), alphabet='nuc_nogap')
+                                   root_state=root_prof.sum(axis=-1), alphabet=alphabet)
     else:
         inferred_model = GTR_site_specific.infer(n_ija, T_ia, pc=pc,
-                          root_state=root_prof, alphabet='nuc_nogap')
+                                                 root_state=root_prof, alphabet=alphabet)
 
     if tt:
         (m_denom, m_num), (t_denom, t_num) = exact_mu_t_update(tt)

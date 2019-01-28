@@ -10,6 +10,7 @@ from treetime.seq_utils import seq2prof, profile_maps, alphabets
 from generate_toy_data import *
 from filenames import *
 from estimation import *
+import cProfile, pstats, io
 
 def KL(p,q):
     return np.sum(p*log(p/q))
@@ -47,6 +48,8 @@ if __name__ == '__main__':
     analysis_types = ['naive', 'single', 'dressed', 'regular', 'regular_true',
                       'marginal','marginal_true', 'iterative', 'iterative_true']
 
+    analysis_types = ['iterative']
+
     alphabet='aa_nogap' if args.aa else 'nuc_nogap'
     for fname in files:
         print(fname)
@@ -75,12 +78,21 @@ if __name__ == '__main__':
                     bl = [n.branch_length for n in _t.tree.find_clades() if n!=_t]
                 elif ana in ['iterative', 'iterative_true']:
                     model = 'JC69'
+                    pr = cProfile.Profile()
+                    pr.enable()
                     for i in range(niter):
                         mc = reconstruct_counts(prefix, params, gtr=model,
                                                 alphabet=alphabet, marginal=True,
                                                 reconstructed_tree=ana=='iterative')
                         model = estimate_GTR(mc[0], pc=pc, single_site=False, alphabet=alphabet)
                         print(i, np.mean([chisq(model.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]))
+                    pr.disable()
+
+                    s = io.StringIO()
+
+                    ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
+                    ps.print_stats()
+                    print(s.getvalue())
                 elif ana=='branch_length':
                     model = 'JC69'
                     kappa=1.0

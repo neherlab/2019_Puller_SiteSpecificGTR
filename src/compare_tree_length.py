@@ -16,8 +16,9 @@ if __name__ == '__main__':
     args=parser.parse_args()
 
     prefix = args.prefix
-    mask = "/L{L}_n{n}_m{mu}_*fasta.gz".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
-    files = glob.glob(prefix+mask)
+    result_prefix = prefix+'_results_pc_0.1'
+    mask = "/L{L}_n{n}_m{mu}_*reoptimized_true_model.nwk".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
+    files = glob.glob(result_prefix+mask)
 
     length = []
     depth = []
@@ -26,46 +27,39 @@ if __name__ == '__main__':
         params = parse_alignment_name(fname)
         true_tree = Phylo.read(tree_name(prefix, params), 'newick')
         true_model = load_model(model_name(prefix, params))
-        aln = AlignIO.read(alignment_name(prefix, params), 'fasta')
-        iq_tree = Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
-
-        iq_tree_ttl = 0.5*iq_tree.total_branch_length()/params['n']
-        iq_tree_depth = np.mean([x for c,x in iq_tree.depths().items() if c.is_terminal()])
-
         m = true_model.average_rate().mean()
-        true_model.mu/=m
-        tt = TreeAnc(tree=iq_tree, aln=aln, gtr = true_model, reduce_alignment=False)
-        tt.infer_ancestral_sequences(marginal=True)
-        for i in range(5):
-            x = []
-            for n in tt.tree.find_clades():
-                if n.up is None:
-                    continue
-                x.append([tt.optimal_marginal_branch_length(n), n.branch_length])
-                n.branch_length = 0.5*(x[-1][0] + n.branch_length)
+        for n in true_tree.find_clades():
+            n.branch_length *= m
+        
+        iq_tree = Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
+        reoptimized_T = Phylo.read(reoptimized_tree(result_prefix, params), 'newick')
+        reoptimized_T_true_model = Phylo.read(reoptimized_tree_true_model(result_prefix, params), 'newick')
 
-            x = np.array(x)
-            print(x.sum(axis=0))
-            tt.infer_ancestral_sequences(marginal=True)
-            print(tt.sequence_LH())
+        tmp_ttl = []
+        tmp_depth = []
+        for t in [true_tree, iq_tree, reoptimized_T, reoptimized_T_true_model]:
+            tmp_ttl.append(0.5*t.total_branch_length()/params['n'])
+            tmp_depth.append(np.mean([x for c,x in t.depths().items() if c.is_terminal()]))
+            
 
-        length.append([0.5*true_tree.total_branch_length()*m/params['n'],
-                       0.5*tt.tree.total_branch_length()/params['n'], iq_tree_ttl])
-
-        depth.append([np.mean([x*m for c,x in true_tree.depths().items() if c.is_terminal()]),
-                      np.mean([x for c,x in tt.tree.depths().items() if c.is_terminal()]), iq_tree_depth])
+        length.append(tmp_ttl)
+        depth.append(tmp_depth)
 
 
     length = np.array(length)
     depth = np.array(depth)
 
     plt.figure(1)
-    plt.scatter(length[:,0], length[:,1])
-    plt.scatter(length[:,0], length[:,2]*0.5)
+    plt.scatter(length[:,0], length[:,1], label='iqtree')
+    plt.scatter(length[:,0], length[:,2], label='inferred model')
+    plt.scatter(length[:,0], length[:,3], label='true model')
     plt.plot([0,.25], [0,.25])
-
+    plt.legend()
 
     plt.figure(2)
-    plt.scatter(depth[:,0], depth[:,1])
-    plt.scatter(depth[:,0], depth[:,2])
-    plt.plot([0,.5], [0,.5])
+    plt.scatter(depth[:,0], depth[:,1], label='iqtree')
+    plt.scatter(depth[:,0], depth[:,2], label='inferred model') 
+    plt.scatter(depth[:,0], depth[:,3], label='true model') 
+    plt.plot([0,3.5], [0,3.5])
+    plt.legend()
+    
