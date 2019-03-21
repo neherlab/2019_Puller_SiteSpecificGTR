@@ -11,26 +11,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
     parser.add_argument("-m", type=float, help="simulated mutation rate")
     parser.add_argument("-n", type=int, help="number of taxa")
+    parser.add_argument("--pc", type=float, help="pseudo count")
     parser.add_argument("-L", type=int, help="length of sequence")
     parser.add_argument("--prefix", type=str, required=True, help="folder to retrieve data from")
     args=parser.parse_args()
 
     prefix = args.prefix
-    result_prefix = prefix+'_results_pc_0.1'
+    result_prefix = prefix+'_results_pc_%1.2f'%args.pc
     mask = "/L{L}_n{n}_m{mu}_*reoptimized_true_model.nwk".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
     files = glob.glob(result_prefix+mask)
 
     length = []
     depth = []
     for fname in files:
-        print(fname)
         params = parse_alignment_name(fname)
         true_tree = Phylo.read(tree_name(prefix, params), 'newick')
         true_model = load_model(model_name(prefix, params))
         m = true_model.average_rate().mean()
         for n in true_tree.find_clades():
             n.branch_length *= m
-        
+
         iq_tree = Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
         reoptimized_T = Phylo.read(reoptimized_tree(result_prefix, params), 'newick')
         reoptimized_T_true_model = Phylo.read(reoptimized_tree_true_model(result_prefix, params), 'newick')
@@ -40,8 +40,9 @@ if __name__ == '__main__':
         for t in [true_tree, iq_tree, reoptimized_T, reoptimized_T_true_model]:
             tmp_ttl.append(0.5*t.total_branch_length()/params['n'])
             tmp_depth.append(np.mean([x for c,x in t.depths().items() if c.is_terminal()]))
-            
 
+        if tmp_depth[2]>1.2*tmp_depth[-1]:
+            print("odd", fname, tmp_depth)
         length.append(tmp_ttl)
         depth.append(tmp_depth)
 
@@ -58,8 +59,8 @@ if __name__ == '__main__':
 
     plt.figure(2)
     plt.scatter(depth[:,0], depth[:,1], label='iqtree')
-    plt.scatter(depth[:,0], depth[:,2], label='inferred model') 
-    plt.scatter(depth[:,0], depth[:,3], label='true model') 
+    plt.scatter(depth[:,0], depth[:,2], label='inferred model')
+    plt.scatter(depth[:,0], depth[:,3], label='true model')
     plt.plot([0,3.5], [0,3.5])
     plt.legend()
-    
+

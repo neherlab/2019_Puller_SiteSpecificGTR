@@ -47,7 +47,8 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
             myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet,
                                              pi_dirichlet_alpha=0, W_dirichlet_alpha=0)
         else:
-            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet)
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = 0.2 if 'aa' in alphabet else 1.0)
+
         myGTR.mu*=params['m']
 
         if out_prefix:
