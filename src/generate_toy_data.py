@@ -13,6 +13,7 @@ from betatree import betatree
 from filenames import *
 from estimation import get_mutation_count
 
+
 def save_model(gtr_model, fname):
     np.savez(fname, pi=gtr_model.Pi, mu=gtr_model.mu, W=gtr_model.W, alphabet=gtr_model.alphabet)
 
@@ -27,12 +28,14 @@ def load_mutation_count(fname):
     return d['n_ija'], d['T_ia'], d['root_sequence']
 
 
-def load_model(fname):
+def load_model(fname, flatten_p=0.0, flatten_mu=0.0, flatten_W=0.0):
     d = np.load(fname)
-    return GTR_site_specific.custom(alphabet=d['alphabet'], mu=d['mu'], pi=d['pi'], W=d['W'])
+    return GTR_site_specific.custom(alphabet=d['alphabet'],
+                                    mu=d['mu']*(1-flatten_mu) + flatten_mu*np.mean(d['mu']),
+                                    pi=d['pi']*(1-flatten_p)+flatten_p/d['pi'].shape[0],
+                                    W=d['W']*(1-flatten_W) + 2*flatten_W/d['W'].shape[0]/(d['W'].shape[0]-1))
 
-
-def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False, alphabet='nuc_nogap'):
+def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False, alphabet='nuc_nogap', alpha=1.0):
     from Bio import AlignIO
     # generate a model
     T = betatree(params['n'], alpha=2.0)
@@ -47,7 +50,7 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
             myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet,
                                              pi_dirichlet_alpha=0, W_dirichlet_alpha=0)
         else:
-            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = 0.2 if 'aa' in alphabet else 1.0)
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = alpha)
 
         myGTR.mu*=params['m']
 
@@ -65,6 +68,7 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
                 with open(alignment_name_raw(out_prefix, params), 'wt') as fh:
                     AlignIO.write(mySeq.get_aln(), fh, 'fasta')
                 reconstruct_tree(out_prefix, params, aa='aa' in alphabet)
+                os.system('gzip '+alignment_name_raw(out_prefix, params))
 
 
 def reconstruct_tree(prefix, params, aa=False):
@@ -74,7 +78,7 @@ def reconstruct_tree(prefix, params, aa=False):
         "-n",     "2",
         "-me",    "0.05"
     ]
-    call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'LG' if aa else 'GTR+G10',
+    call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'LG+G10' if aa else 'GTR+G10',
             ">", "iqtree.log"]
     os.system(" ".join(call))
     os.system("mv %s.treefile %s"%(aln_file, reconstructed_tree_name(prefix, params)))
@@ -88,6 +92,7 @@ if __name__ == '__main__':
     parser.add_argument("-L", type=int, default=300, help="length of sequence")
     parser.add_argument("--JC", action='store_true', help="simulate JC model")
     parser.add_argument("--aa", action='store_true', help="use amino acid alphabet")
+    parser.add_argument("--alpha", default=1.0, type=float,  help="parameter of the dirichlet distribution for preferences")
     parser.add_argument("--prefix", type=str, help="folder to save data")
     args=parser.parse_args()
 
@@ -101,5 +106,5 @@ if __name__ == '__main__':
     mu = args.m
     for ti in range(2):
         params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC, alphabet=alphabet)
+        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC, alphabet=alphabet, alpha=args.alpha)
 

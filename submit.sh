@@ -10,6 +10,5 @@
 #SBATCH --time=05:59:00
 
 source ~/.bashrc
-ml FastTree
 
 ~/miniconda3/bin/python $@
