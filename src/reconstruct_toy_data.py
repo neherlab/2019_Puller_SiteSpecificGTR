@@ -95,12 +95,14 @@ if __name__ == '__main__':
         p_entropy["dressed"][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
         mu_dist["dressed"][dset].append(accuracy["chisq_mu"])
         W_dist["dressed"][dset].append(accuracy["chisq_W"])
-
+        avg_rate["dressed"][dset].append((true_model_average_rate, model.average_rate().mean()))
 
         for tree in [tree_name(prefix, params), reconstructed_tree_name(prefix, params)]:
             for ana in analysis_types_tree:
                 T = Phylo.read(tree, format="newick")
+                s = ''
                 if tree == tree_name(prefix, params):
+                    s = '_true'
                     for n in T.find_clades():
                         n.branch_length *= params['m']
 
@@ -125,15 +127,15 @@ if __name__ == '__main__':
 
                 model = tt.gtr
                 np.fill_diagonal(model.W,0)
-                avg_rate[ana][dset].append((true_model_average_rate, model.average_rate().mean()))
-                delta_LH[ana][dset].append( (tt_true.sequence_LH(), tt.sequence_LH() ))
+                avg_rate[ana+s][dset].append((true_model_average_rate, model.average_rate().mean()))
+                delta_LH[ana+s][dset].append( (tt_true.sequence_LH(), tt.sequence_LH() ))
 
                 if ana!='single':
                     accuracy = assess_reconstruction(true_model, model)
-                    p_dist[ana][dset].append(accuracy["chisq_p"])
-                    p_entropy[ana][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
-                    mu_dist[ana][dset].append(accuracy["chisq_mu"])
-                    W_dist[ana][dset].append(accuracy["chisq_W"])
+                    p_dist[ana+s][dset].append(accuracy["chisq_p"])
+                    p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
+                    mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
+                    W_dist[ana+s][dset].append(accuracy["chisq_W"])
                 else:
                     W_dist[ana][dset].append(chisq(model.W.flatten(), true_model.W.flatten()))
 

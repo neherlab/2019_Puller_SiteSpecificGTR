@@ -7,8 +7,9 @@ fs = 12
 
 labels = {'naive':"Alignment frequencies", "dressed":"True substitution counts", "regular":"Reconstructed",
           "marginal":"ancestral sum", "iterative":"Iterative, reconstructed tree", 'branch_length':"non-linear",
-          "iterative_true":"iterative, true tree", 'marginal_true':"ancestral sum, true tree"}
-colors = {k:'C%d'%(i+1) for i,k in enumerate(sorted(labels.keys()))}
+          "iterative_true":"iterative, true tree", 'marginal_true':"ancestral sum, true tree",
+          "optimize_tree":"Optimize tree and model", "optimize_tree_true":"Optimize tree(true) and model"}
+colors = {k:'C%d'%((i+1)%10) for i,k in enumerate(sorted(labels.keys()))}
 
 def load_toy_data_results(path):
     mu_dist = defaultdict(lambda: defaultdict(list))
@@ -176,35 +177,40 @@ def plot_site_specific_rate_dist(data, n_vals, mu_vals, methods=None, fname=None
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description = "", usage="plot reconstructions")
+    parser.add_argument("--prefix", type=str, help="prefix of data set")
+    args=parser.parse_args()
 
     from matplotlib import pyplot as plt
     data = {}
 
+    n_vals_to_plot = [100,300]
     L=1000
     for pc in [0.1, 0.5, 1.0]:
-        tmp, n_vals, mu_vals = load_toy_data_results('2019-01-12_simulated_data_L1000_aa_results_pc_%1.1f/'%pc)
+        tmp, n_vals, mu_vals = load_toy_data_results(args.prefix + '_results_pc_%1.2f/'%pc)
         data[pc]=tmp
 
     pc_general = 0.1
     ####
     plot_pdist_vs_tree_length(data[pc_general], n_vals, mu_vals, methods=['naive', 'dressed'],
                         fname='figures/p_dist_vs_treelength')
-    plot_avg_rate(data[pc_general], [3000], mu_vals, methods=['dressed', 'branch_length'],
+    plot_avg_rate(data[pc_general], n_vals_to_plot, mu_vals, methods=['dressed'],
                         fname='figures/avg_rate_dressed')
 
     ####
-    plot_pdist_vs_rtt(data[pc_general], [3000], mu_vals,
+    plot_pdist_vs_rtt(data[pc_general], n_vals_to_plot, mu_vals,
                       methods=['naive', 'dressed', 'regular', 'marginal','iterative',
-                               'iterative_true'],
+                               'iterative_true', 'optimize_tree'],
                       fname='figures/p_dist_vs_rtt')
 
-    plot_site_specific_rate_dist(data[pc_general], [3000], mu_vals,
+    plot_site_specific_rate_dist(data[pc_general], n_vals_to_plot, mu_vals,
                       methods=['naive', 'dressed', 'regular', 'marginal', 'iterative',
-                                'iterative_true'],
+                                'iterative_true', 'optimize_tree'],
                       fname='figures/mu_dist_vs_rtt')
 
-    plot_pentropy_vs_rtt(data, [3000], mu_vals, pc_vals=[0.1, 0.5, 1.0],
-                         methods=['naive', 'dressed', 'iterative'],
+    plot_pentropy_vs_rtt(data, n_vals_to_plot, mu_vals, pc_vals=[0.1, 0.5, 1.0],
+                         methods=['naive', 'dressed', 'iterative', 'optimize_tree'],
                          fname='figures/p_entropy_vs_rtt')
 
     # for each data set size, plot the distance of the inferred equilibrium frequencies
