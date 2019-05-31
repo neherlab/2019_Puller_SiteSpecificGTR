@@ -8,33 +8,64 @@ from treetime.gtr import GTR
 from treetime.seq_utils import seq2prof, profile_maps, alphabets
 from filenames import *
 
-def p_from_aln(in_prefix, params, alphabet='nuc_nogap'):
-    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
-        aln = AlignIO.read(fh, 'fasta')
+def p_from_aln(aln, alphabet='nuc_nogap'):
+    """computes frequencies of characters in alignment columns
 
+    Parameters
+    ----------
+    aln : alignment
+        Alignment
+    alphabet : str, optional
+        nucleotide or amino acid
+
+    Returns
+    -------
+    np.array
+        frequency matrix
+    """
     alpha = alphabets[alphabet]
     aln_array = np.array(aln)
     af = []
     for a in alpha:
-        af.append(np.mean(aln_array==a, axis=0))
+        af.append(np.mean(aln_array==a.decode(), axis=0))
     return np.array(af)
 
 
 def reconstruct_counts(in_prefix, params, gtr='JC69', alphabet='nuc_nogap',
-                       marginal=False, reconstructed_tree=False, tt=None):
-    if tt:
-        myTree=tt
+                       marginal=False, reconstructed_tree=False):
+    """returns inferred mutation counts and time spent in different states
+
+    Parameters
+    ----------
+    in_prefix : str
+        determines the data set to use
+    params : dict
+        contains the parameters of the run (mutation rate etc)
+    gtr : str, GTR, optional
+        the initital GTR model to use
+    alphabet : str, optional
+        Description
+    marginal : bool, optional
+        Description
+    reconstructed_tree : bool, optional
+        Description
+
+    Returns
+    -------
+    TYPE
+        Description
+    """
+    with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
+        aln = AlignIO.read(fh, 'fasta')
+    tree_fname = reconstructed_tree_name(in_prefix, params) if reconstructed_tree \
+                  else tree_name(in_prefix, params)
+    if type(gtr)==str:
+        tmp_GTR = GTR.standard(gtr, alphabet=alphabet)
     else:
-        with gzip.open(alignment_name(in_prefix, params), 'rt') as fh:
-            aln = AlignIO.read(fh, 'fasta')
-        tree_fname =  reconstructed_tree_name(in_prefix, params) if reconstructed_tree else tree_name(in_prefix, params)
-        if type(gtr)==str:
-            tmp_GTR = GTR.standard(gtr, alphabet=alphabet)
-        else:
-            tmp_GTR=gtr
-        myTree = TreeAnc(gtr=tmp_GTR, alphabet=alphabet,
-                         tree=tree_fname, aln=aln,
-                         reduce_alignment=False, verbose = 0)
+        tmp_GTR=gtr
+    myTree = TreeAnc(gtr=tmp_GTR, alphabet=alphabet,
+                     tree=tree_fname, aln=aln,
+                     reduce_alignment=False, verbose = 0)
 
     if type(gtr)==str:
         myTree.infer_ancestral_sequences(marginal=True, infer_gtr=True, normalized_rate=False)

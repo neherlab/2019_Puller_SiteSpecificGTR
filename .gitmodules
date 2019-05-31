@@ -1,0 +1,3 @@
+[submodule "HIV_fitness_landscape"]
+	path = HIV_fitness_landscape
+	url = git@github.com:neherlab/HIV_fitness_landscape.git

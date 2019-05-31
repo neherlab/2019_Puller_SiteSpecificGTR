@@ -5,7 +5,7 @@ from collections import defaultdict
 fmts = ['.png', '.pdf']
 fs = 12
 
-labels = {'naive':"Alignment frequencies", "dressed":"True substitution counts", "regular":"Reconstructed",
+labels = {'naive':"Alignment frequencies", "dressed":"Substitution counts", "regular":"Reconstructed",
           "marginal":"ancestral sum", "iterative":"Iterative, reconstructed tree", 'branch_length':"non-linear",
           "iterative_true":"iterative, true tree", 'marginal_true':"ancestral sum, true tree",
           "optimize_tree":"Optimize tree and model", "optimize_tree_true":"Optimize tree(true) and model"}
@@ -47,6 +47,8 @@ def plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=None, fname=None):
     # We assume a Yule tree here, that is the total tree length can be calculated as:
     # dk/dt = -k, hence int_t k(t) = n
     plt.figure()
+    ls = {n:l for n,l in zip(sorted(n_vals, reverse=True), ['-', '--', '-.', ':'])}
+    cols = {n:'C%d'%i for i,n in enumerate(n_vals)}
     for label, dset in data["p"].items():
         if methods and label not in methods:
             continue
@@ -57,10 +59,13 @@ def plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=None, fname=None):
                 d.append((n*mu, np.mean(dset[(L,n,mu)]), np.std(dset[(L,n,mu)])))
 
             d = np.array(sorted(d, key=lambda x:x[0]))
-            plt.errorbar(d[:,0], d[:,1], d[:,2],
-                         label=labels[label] if n==n_vals[0] else '', c=colors[label])
+            plt.errorbar(d[:,0], d[:,1], d[:,2], lw=2, ls=ls[n],
+                         label=labels[label] if n==n_vals[-1] else '', c=colors[label])
+            if label=='naive':
+                plt.text(d[0,0], d[0,1]*1.2, r'$n='+str(n)+'$', fontsize=fs*0.8)
 
     plt.plot([10,1000], [0.1,0.001], label=r'$\sim x^{-1}$', c='k')
+    plt.ylim([0.001, 1.6])
     plt.yscale('log')
     plt.xscale('log')
     plt.legend(fontsize=fs)
@@ -180,25 +185,31 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "", usage="plot reconstructions")
     parser.add_argument("--prefix", type=str, help="prefix of data set")
+    parser.add_argument("--nvals", nargs='+', type=int, default=[1000], help="n values to plot")
+    parser.add_argument("--pc", type=float, default=0.1, help="pc value to use in plots")
     args=parser.parse_args()
 
     from matplotlib import pyplot as plt
     data = {}
 
-    n_vals_to_plot = [100,300]
+    n_vals_to_plot = args.nvals
     L=1000
     for pc in [0.1, 0.5, 1.0]:
         tmp, n_vals, mu_vals = load_toy_data_results(args.prefix + '_results_pc_%1.2f/'%pc)
         data[pc]=tmp
 
-    pc_general = 0.1
-    ####
+    pc_general = args.pc
+    #### Fig1: equilibrium frequency accuracy for all n and mu's
     plot_pdist_vs_tree_length(data[pc_general], n_vals, mu_vals, methods=['naive', 'dressed'],
                         fname='figures/p_dist_vs_treelength')
+
+    #### Fig 2: average rate vs true rate. shows the effect of first order
+    #approximation when working off counts. uninformative for other models since
+    #mu is set to one -- here we need to compare branch length
     plot_avg_rate(data[pc_general], n_vals_to_plot, mu_vals, methods=['dressed'],
                         fname='figures/avg_rate_dressed')
 
-    ####
+    #### Fig 3: comparison of different models as a function of tree length for one pc
     plot_pdist_vs_rtt(data[pc_general], n_vals_to_plot, mu_vals,
                       methods=['naive', 'dressed', 'regular', 'marginal','iterative',
                                'iterative_true', 'optimize_tree'],

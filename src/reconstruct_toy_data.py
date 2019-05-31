@@ -1,5 +1,6 @@
 import os, gzip, glob, pickle
 import numpy as np
+import gc
 from collections import defaultdict
 
 from treetime.treeanc import TreeAnc
@@ -25,6 +26,55 @@ def assess_reconstruction(model, true_model):
             "chisq_W":chisq(model.W.flatten(), true_model.W.flatten())}
 
 
+def get_LH(tname,aln, gtr):
+    tt_true = TreeAnc(tree=tname, aln=aln, gtr=gtr, compress=False)
+    tt_true.infer_ancestral_sequences(marginal=True)
+    true_tree_length = tt_true.tree.total_branch_length()
+    return tt_true.sequence_LH(), true_tree_length
+
+
+def analyze(ana, tree, aln, alphabet, prefix, params, true_model):
+    T = Phylo.read(tree, format="newick")
+    s = ''
+    # if the true tree is used, rescale its branches with the mutation rate
+    # to convert them to evolutionary distance, also make suffix to mark data
+    if tree == tree_name(prefix, params):
+        for n in T.find_clades():
+            n.branch_length *= params['m']
+
+    tt = TreeAnc(tree=T, aln = aln, compress=False, alphabet=alphabet)
+
+    if ana=="iterative":
+        # this performs iterative estimation of the model and ancestral sequences
+        # using marginal ancestral reconstruction
+        tt.infer_gtr_iterative(normalized_rate=False, site_specific=True, pc=pc)
+    elif ana=="single":
+        tt.infer_gtr(marginal=False, normalized_rate=False, site_specific=False, pc=pc)
+    elif ana=="regular":
+        tt.infer_gtr(marginal=False, normalized_rate=False, site_specific=True, pc=pc)
+    elif ana=="marginal":
+        tt.infer_gtr(marginal=True, normalized_rate=False, site_specific=True, pc=pc)
+    elif ana=='optimize_tree':
+        tt.optimize_tree(branch_length_mode='marginal', max_iter=10,
+                         infer_gtr=True, site_specific_gtr=True, pc=pc)
+
+    # calculate likelihood
+    tt.infer_ancestral_sequences(marginal=True)
+
+    np.fill_diagonal(model.W,0)
+    avg_rate[ana+s][dset].append((true_model_average_rate, model.average_rate().mean()))
+    delta_LH[ana+s][dset].append( (true_LH, tt.sequence_LH() ))
+
+    if ana!='single':
+        return assess_reconstruction(true_model, model)
+        p_dist[ana+s][dset].append(accuracy["chisq_p"])
+        p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
+        mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
+        W_dist[ana+s][dset].append(accuracy["chisq_W"])
+    else:
+        return {'chisq_W':chisq(model.W.flatten(), true_model.W.flatten())}
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
@@ -38,7 +88,7 @@ if __name__ == '__main__':
 
     prefix = args.prefix
     mask = "/L{L}_n{n}_m{mu}_*fasta.gz".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
-    files = glob.glob(prefix+mask)
+    files = sorted(glob.glob(prefix+mask))
 
     mu_dist = defaultdict(lambda: defaultdict(list))
     p_dist = defaultdict(lambda: defaultdict(list))
@@ -77,10 +127,7 @@ if __name__ == '__main__':
         with gzip.open(alignment_name(prefix, params), 'rt') as fh:
             aln = AlignIO.read(fh, 'fasta')
 
-        tt_true = TreeAnc(tree=tree_name(prefix, params), aln=aln, gtr=true_model, reduce_alignment=False)
-        tt_true.infer_ancestral_sequences(marginal=True)
-        true_tree_length = tt_true.tree.total_branch_length()
-
+        true_LH, true_tree_length = get_LH(tree_name(prefix, params), aln=aln, gtr=true_model)
         ## tree less methods
         # alignment frequencies
         naive = p_from_aln(aln, alphabet=alphabet)
@@ -99,52 +146,25 @@ if __name__ == '__main__':
 
         for tree in [tree_name(prefix, params), reconstructed_tree_name(prefix, params)]:
             for ana in analysis_types_tree:
-                T = Phylo.read(tree, format="newick")
-                s = ''
-                if tree == tree_name(prefix, params):
-                    s = '_true'
-                    for n in T.find_clades():
-                        n.branch_length *= params['m']
-
-                tt = TreeAnc(tree=T, aln = aln, reduce_alignment=False, alphabet=alphabet)
-
-                if ana=="iterative":
-                    # this performs iterative estimation of the model and ancestral sequences
-                    # using marginal ancestral reconstruction
-                    tt.infer_gtr_iterative(normalized_rate=False, site_specific=True, pc=pc)
-                elif ana=="single":
-                    tt.infer_gtr(marginal=False, normalized_rate=False, site_specific=False, pc=pc)
-                elif ana=="regular":
-                    tt.infer_gtr(marginal=False, normalized_rate=False, site_specific=True, pc=pc)
-                elif ana=="marginal":
-                    tt.infer_gtr(marginal=True, normalized_rate=False, site_specific=True, pc=pc)
-                elif ana=='optimize_tree':
-                    tt.optimize_tree(branch_length_mode='marginal', max_iter=10,
-                                     infer_gtr=True, site_specific_gtr=True, pc=pc)
-
-                # calculate likelihood
-                tt.infer_ancestral_sequences(marginal=True)
-
-                model = tt.gtr
-                np.fill_diagonal(model.W,0)
-                avg_rate[ana+s][dset].append((true_model_average_rate, model.average_rate().mean()))
-                delta_LH[ana+s][dset].append( (tt_true.sequence_LH(), tt.sequence_LH() ))
+                accuracy = analyze(ana, tree, aln, alphabet, prefix, params, true_model)
+                s = '_true' if tree == tree_name(prefix, params) else ''
 
                 if ana!='single':
                     accuracy = assess_reconstruction(true_model, model)
                     p_dist[ana+s][dset].append(accuracy["chisq_p"])
                     p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
                     mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
-                    W_dist[ana+s][dset].append(accuracy["chisq_W"])
-                else:
-                    W_dist[ana][dset].append(chisq(model.W.flatten(), true_model.W.flatten()))
 
+                W_dist[ana+s][dset].append(accuracy["chisq_W"])
 
-    out_prefix = prefix + '_results_pc_%1.2f/'%pc
-    if not os.path.isdir(out_prefix):
-        os.mkdir(out_prefix)
+                gc.collect()
 
-    out_fname = out_prefix + "_".join(["{name}{val}".format(name=n, val=args.__getattribute__(n)) for n in ['L', 'n', 'm'] if args.__getattribute__(n)]) + '.pkl'
-    with open(out_fname, 'wb') as fh:
-        pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(p_entropy), dict(mu_dist),
-                     dict(W_dist), dict(delta_LH), dict(avg_rate)), fh)
+        out_prefix = prefix + '_results_pc_%1.2f/'%pc
+        if not os.path.isdir(out_prefix):
+            os.mkdir(out_prefix)
+
+        out_fname = out_prefix + "_".join(["{name}{val}".format(name=n, val=args.__getattribute__(n))
+                                        for n in ['L', 'n', 'm'] if args.__getattribute__(n)]) + '.pkl'
+        with open(out_fname, 'wb') as fh:
+            pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(p_entropy), dict(mu_dist),
+                         dict(W_dist), dict(delta_LH), dict(avg_rate)), fh)
