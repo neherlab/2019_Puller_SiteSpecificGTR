@@ -19,6 +19,7 @@ def chisq(p,q):
     return np.sum((p-q)**2)
 
 def assess_reconstruction(model, true_model):
+    true_model_average_rate = true_model.average_rate().mean()
     return {"chisq_p": np.mean([chisq(model.Pi[:,i],true_model.Pi[:,i]) for i in range(params['L'])]),
             "model_entropy": -np.mean(np.sum(model.Pi*np.log(model.Pi), axis=0)),
             "true_entropy": -np.mean(np.sum(true_model.Pi*np.log(true_model.Pi), axis=0)),
@@ -62,17 +63,13 @@ def analyze(ana, tree, aln, alphabet, prefix, params, true_model):
     tt.infer_ancestral_sequences(marginal=True)
 
     np.fill_diagonal(model.W,0)
-    avg_rate[ana+s][dset].append((true_model_average_rate, model.average_rate().mean()))
-    delta_LH[ana+s][dset].append( (true_LH, tt.sequence_LH() ))
-
+    acc = {'avg_rate':model.average_rate().mean(), 'LH':tt.sequence_LH()}
     if ana!='single':
-        return assess_reconstruction(true_model, model)
-        p_dist[ana+s][dset].append(accuracy["chisq_p"])
-        p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
-        mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
-        W_dist[ana+s][dset].append(accuracy["chisq_W"])
+        acc.update(assess_reconstruction(true_model, tt.gtr))
     else:
-        return {'chisq_W':chisq(model.W.flatten(), true_model.W.flatten())}
+        acc['chisq_W'] = chisq(model.W.flatten(), true_model.W.flatten())
+
+    return acc
 
 
 if __name__ == '__main__':
@@ -138,11 +135,11 @@ if __name__ == '__main__':
         # use true counts, no tree
         model = estimate_GTR(true_mut_counts, pc=pc, single_site=False, alphabet=alphabet)
         accuracy = assess_reconstruction(true_model, model)
+        W_dist["dressed"][dset].append(accuracy["chisq_W"])
+        avg_rate["dressed"][dset].append((true_model_average_rate, model.average_rate().mean()))
         p_dist["dressed"][dset].append(accuracy["chisq_p"])
         p_entropy["dressed"][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
         mu_dist["dressed"][dset].append(accuracy["chisq_mu"])
-        W_dist["dressed"][dset].append(accuracy["chisq_W"])
-        avg_rate["dressed"][dset].append((true_model_average_rate, model.average_rate().mean()))
 
         for tree in [tree_name(prefix, params), reconstructed_tree_name(prefix, params)]:
             for ana in analysis_types_tree:
@@ -150,11 +147,12 @@ if __name__ == '__main__':
                 s = '_true' if tree == tree_name(prefix, params) else ''
 
                 if ana!='single':
-                    accuracy = assess_reconstruction(true_model, model)
                     p_dist[ana+s][dset].append(accuracy["chisq_p"])
                     p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
                     mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
 
+                delta_LH[ana+s][dset].append( (true_LH, accuracy['LH'] ))
+                avg_rate[ana+s][dset].append(( true_model_average_rate, accuracy['avg_rate']))
                 W_dist[ana+s][dset].append(accuracy["chisq_W"])
 
                 gc.collect()

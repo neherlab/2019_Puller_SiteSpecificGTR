@@ -1,0 +1,136 @@
+ref_seq = "B.FR.1983.HXB2-LAI-IIIB-BRU.K03455"
+
+rule align:
+    message:
+        """
+        Aligning sequences to {ref_seq}
+        """
+    input:
+        sequences = "downloads/HIV_{dset}_LANL_all.fasta",
+    params:
+        reference = ref_seq
+    output:
+        alignment = "results/HIV_{dset}_aligned.fasta"
+    shell:
+        """
+        augur align \
+            --sequences {input.sequences} \
+            --reference-name {params.reference} \
+            --output {output.alignment} \
+            --remove-reference
+        """
+
+
+rule make_meta:
+    input:
+        aln=rules.align.output.alignment
+    output:
+        meta="results/HIV_{dset}_meta.tsv"
+    run:
+        from Bio import SeqIO
+        with open(output.meta, 'w') as fh:
+            for seq in SeqIO.parse(input.aln, 'fasta'):
+                fh.write(seq.name+'\n')
+
+
+rule translate:
+    input:
+        alignment = rules.align.output.alignment
+    output:
+        alignment = "results/HIV_{dset}_aa-aligned.fasta"
+    run:
+        from Bio import SeqIO, Seq, AlignIO
+        from augur.translate import safe_translate
+        seqs = list(SeqIO.parse(input.alignment, 'fasta'))
+        for s in seqs:
+            s.seq = Seq.Seq(safe_translate(str(s.seq)))
+        SeqIO.write(seqs, output.alignment, 'fasta')
+
+rule tree:
+    message: "Building tree"
+    input:
+        alignment = rules.align.output.alignment
+    output:
+        tree = "results/HIV_{dset}_tree.nwk"
+    shell:
+        """
+        augur tree \
+            --alignment {input.alignment} \
+            --output {output.tree} \
+            --substitution-model GTR+R10 \
+        """
+
+rule tree_aa:
+    message: "Building tree for amino acids"
+    input:
+        alignment = rules.translate.output.alignment
+    output:
+        tree = "results/HIV_{dset}_aa-tree.nwk"
+    shell:
+        """
+    	fasttree {input.alignment} > {output.tree}
+	    """
+
+"""
+        iqtree -nt 2 -n 2 -m LG+R10 -s {input.alignment} -redo
+        mv {input.alignment}.treefile {output.tree}
+"""
+
+rule refine:
+    input:
+        tree = rules.tree.output.tree,
+        aln = rules.align.output.alignment
+    output:
+        tree = "results/HIV_{dset}_refined-tree.nwk",
+        node_data = "results/HIV_{dset}_branchlength.json"
+    shell:
+        """
+        augur refine \
+            --tree {input.tree} \
+            --alignment {input.aln} \
+            --keep-root \
+            --output-tree {output.tree} \
+            --output-node-data {output.node_data}
+        """
+
+rule ancestral:
+    message: "Reconstructing ancestral sequences and mutations"
+    input:
+        tree = rules.refine.output.tree,
+        alignment = rules.align.output.alignment
+    output:
+        node_data = "results/HIV_{dset}_nt-muts.json"
+    params:
+        inference = "marginal"
+    shell:
+        """
+        augur ancestral \
+            --tree {input.tree} \
+            --alignment {input.alignment} \
+            --output {output.node_data} \
+            --inference {params.inference}
+        """
+
+
+rule export:
+    message: "Exporting data files for for auspice"
+    input:
+        tree = rules.refine.output.tree,
+        branch_lengths = rules.refine.output.node_data,
+        nt_muts = rules.ancestral.output.node_data,
+        meta = rules.make_meta.output,
+        auspice_config = "config/auspice_config.json"
+    output:
+        auspice_tree = "auspice/HIV_{dset}_tree.json",
+        auspice_meta = "auspice/HIV_{dset}_meta.json",
+    shell:
+        """
+        augur export \
+            --tree {input.tree} \
+            --node-data {input.branch_lengths} {input.nt_muts} \
+            --metadata {input.meta} \
+            --auspice-config {input.auspice_config} \
+            --output-tree {output.auspice_tree} \
+            --output-meta {output.auspice_meta} \
+            --minify-json
+        """

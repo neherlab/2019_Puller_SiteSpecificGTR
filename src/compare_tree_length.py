@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     prefix = args.prefix
     result_prefix = prefix+'_results_pc_%1.2f'%args.pc
-    mask = "/L{L}_n{n}_m{mu}_*reoptimized_true_model.nwk".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
+    mask = "/L{L}_n{n}_m{mu}_*reoptimized.nwk".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
     files = glob.glob(result_prefix+mask)
 
     length = []

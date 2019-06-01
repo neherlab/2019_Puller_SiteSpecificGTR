@@ -58,9 +58,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
     parser.add_argument("-m", type=float, help="simulated mutation rate")
     parser.add_argument("-n", type=int, help="number of taxa")
-    parser.add_argument("-L", type=int, help="length of sequence")
-    parser.add_argument("--pc", type=float, help="pseudo count")
-    parser.add_argument("--aa",action='store_true', help="assume amino acid alphabet")
+    parser.add_argument("-L", default=1000, type=int, help="length of sequence")
+    parser.add_argument("--pc", default=0.1, type=float, help="pseudo count")
+    parser.add_argument("--aa", action='store_true', help="assume amino acid alphabet")
     parser.add_argument("--prefix", type=str, required=True, help="folder to retrieve data from")
     parser.add_argument("--true-model", action='store_true', help='assume true model')
     parser.add_argument("--true-tree", action='store_true', help='assume true tree')
@@ -72,7 +72,13 @@ if __name__ == '__main__':
 
     n_iter = 20
     alphabet = 'aa_nogap' if args.aa else 'nuc_nogap'
-    out_prefix = prefix+'_results_pc_%1.2f'%args.pc
+    if args.true_model:
+        out_prefix = prefix+'_results'
+    else:
+        out_prefix = prefix+'_results_pc_%1.2f'%args.pc
+
+    if not os.path.isdir(out_prefix):
+        os.mkdir(out_prefix)
 
     for fname in files:
         print(fname)

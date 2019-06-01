@@ -50,10 +50,11 @@ if __name__ == '__main__':
     out_prefix = prefix+'_results_model_dev'
 
 
-    ttl = {'mu':[], 'pi':[]}
-    eps_vals = list(np.linspace(0,.09,10)) + list(np.linspace(0.1,1,10))
+    ttl = {'mu':[], 'pi':[], 'all':[]}
+    eps_vals = list(np.linspace(0.0,1,11))
 
     for fname in files:
+        print(fname)
         params = parse_alignment_name(fname)
 
         true_model = load_model(model_name(prefix, params))
@@ -64,30 +65,31 @@ if __name__ == '__main__':
 
         total_branch_length_pi = []
         total_branch_length_mu = []
+        total_branch_length_all = []
 
         for eps in eps_vals:
-            model = GTR_site_specific.custom(mu = true_model.mu/params['m'], W=true_model.W, pi=(true_model.Pi+eps)/1+n*eps, alphabet=alphabet)
+            model = load_model(model_name(prefix, params), flatten_p=eps)
+            model.mu /= model.average_rate().mean()
             tt = run_tree(fname, out_prefix, alphabet, model)
-            print(model.average_rate().mean())
-            total_branch_length_pi.append((eps, tt.tree.total_branch_length(), true_ttl, model.average_rate().mean()))
+            total_branch_length_pi.append((eps, tt.tree.total_branch_length(), true_ttl, model.mu.mean()))
+            print(total_branch_length_pi[-1])
 
-        model = GTR_site_specific.custom(mu = true_model.mu/params['m'], W=true_model.W,
-                                         pi=np.ones_like(true_model.Pi, dtype=float)/n, alphabet=alphabet)
-        tt = run_tree(fname, out_prefix, alphabet, model)
-        total_branch_length_pi.append((np.inf, tt.tree.total_branch_length(), true_ttl, model.average_rate()))
 
         for eps in eps_vals:
-            model = GTR_site_specific.custom(mu = (true_model.mu/params['m'] + eps)/(1+eps), W=true_model.W, pi=true_model.Pi, alphabet=alphabet)
+            model = load_model(model_name(prefix, params), flatten_mu=eps)
+            model.mu /= model.average_rate().mean()
             tt = run_tree(fname, out_prefix, alphabet, model)
-            total_branch_length_mu.append((eps, tt.tree.total_branch_length(),true_ttl))
+            total_branch_length_mu.append((eps, tt.tree.total_branch_length(),true_ttl, model.mu.mean()))
 
-        model = GTR_site_specific.custom(mu = np.ones_like(true_model.mu), W=true_model.W,
-                                         pi=true_model.Pi, alphabet=alphabet)
-        tt = run_tree(fname, out_prefix, alphabet, model)
-        total_branch_length_mu.append((np.inf, tt.tree.total_branch_length(),true_ttl))
-
+        for eps in eps_vals:
+            model = load_model(model_name(prefix, params), flatten_mu=eps, flatten_p=eps, flatten_W=eps)
+            model.mu /= model.average_rate().mean()
+            tt = run_tree(fname, out_prefix, alphabet, model)
+            total_branch_length_all.append((eps, tt.tree.total_branch_length(),true_ttl, model.mu.mean()))
+            
         ttl['pi'].append(total_branch_length_pi)
         ttl['mu'].append(total_branch_length_mu)
+        ttl['all'].append(total_branch_length_all)
 
 
     for x in ttl['pi']:
@@ -95,5 +97,9 @@ if __name__ == '__main__':
         plt.plot(c[:,0], c[:,1]/c[:,2])
 
     for x in ttl['mu']:
+        c=np.array(x)
+        plt.plot(c[:,0], c[:,1]/c[:,2])
+
+    for x in ttl['all']:
         c=np.array(x)
         plt.plot(c[:,0], c[:,1]/c[:,2])

@@ -11,7 +11,6 @@ from treetime.seq_utils import seq2prof, profile_maps
 from betatree import betatree
 
 from filenames import *
-from estimation import get_mutation_count
 
 
 def save_model(gtr_model, fname):
@@ -19,7 +18,7 @@ def save_model(gtr_model, fname):
 
 
 def save_mutation_count(T, fname):
-    n_ija,T_ia,root = get_mutation_count(T, T.gtr.alphabet)
+    n_ija,T_ia,root = get_ancestral_mutation_count(T, T.gtr.alphabet)
     np.savez(fname, n_ija=n_ija, T_ia=T_ia, root_sequence=root)
 
 
@@ -41,8 +40,11 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
     T = betatree(params['n'], alpha=2.0)
     T.yule=yule
     T.coalesce()
+    # ladderize the tree and name internal nodes via loading into TreeAnc
+    T.BioTree.ladderize()
+    tt = TreeAnc(tree=T.BioTree)
     if out_prefix:
-        Phylo.write(T.BioTree, tree_name(out_prefix, params), 'newick')
+        Phylo.write(tt.tree, tree_name(out_prefix, params), 'newick')
 
     for mi in range(n_model):
         params['model']=mi
@@ -73,16 +75,52 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
 
 def reconstruct_tree(prefix, params, aa=False):
     aln_file = alignment_name_raw(prefix, params)
-    fast_opts = [
-        "-ninit", "2",
-        "-n",     "2",
-        "-me",    "0.05"
-    ]
-    call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'LG+G10' if aa else 'GTR+G10',
-            ">", "iqtree.log"]
-    os.system(" ".join(call))
-    os.system("mv %s.treefile %s"%(aln_file, reconstructed_tree_name(prefix, params)))
-    os.system("rm %s.*"%aln_file)
+    out_tree = reconstructed_tree_name(prefix, params)
+    if aa:
+        call = ["fasttree", aln_file, ">", out_tree]
+        os.system(" ".join(call))
+    else:
+        fast_opts = [
+            "-ninit", "2",
+            "-n",     "2",
+            "-me",    "0.05"
+        ]
+        call = ["iqtree"] + fast_opts +["-nt 1", "-s", aln_file, "-m", 'GTR+R10',
+                ">", "iqtree.log"]
+        os.system(" ".join(call))
+        os.system("mv %s.treefile %s"%(aln_file, out_tree))
+        os.system("rm %s.*"%aln_file)
+
+    rec_tree = Phylo.read(out_tree, 'newick')
+    rec_tree.root_at_midpoint()
+    rec_tree.ladderize()
+    Phylo.write(rec_tree, out_tree, 'newick')
+
+def get_ancestral_mutation_count(tree, alphabet):
+    alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
+    L = tree.seq_len
+    q = len(alphabet)
+    positions = np.arange(L)
+    n_ija = np.zeros((q,q,L), dtype=int)
+    T_ia = np.zeros((q,L),dtype=float)
+    for n in tree.tree.get_nonterminals():
+        parent_profile = np.zeros(L, dtype=int)
+        for ai,a in enumerate(alphabet):
+            parent_profile[n.ancestral_sequence==a] = ai
+
+        for c in n:
+            child_profile = np.zeros(L, dtype=int)
+            for ai,a in enumerate(alphabet):
+                child_profile[c.ancestral_sequence==a] = ai
+
+            T_ia[parent_profile,positions] += 0.5*c.branch_length
+            T_ia[child_profile,positions] += 0.5*c.branch_length
+
+            n_ija[child_profile, parent_profile, positions] += (1-(parent_profile==child_profile))
+
+
+    return n_ija, T_ia, tree.tree.root.ancestral_sequence
+
 
 
 if __name__ == '__main__':
