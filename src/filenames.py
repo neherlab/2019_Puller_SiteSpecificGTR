@@ -36,8 +36,8 @@ def tree_name(prefix, params):
 def reconstructed_tree_name(prefix, params):
     return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}_reconstructed.nwk'.format(**params)
 
-def reoptimized_tree(prefix, params):
-    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}_reoptimized.nwk'.format(**params)
+def reoptimized_tree(prefix, params, true_rates=False):
+    return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}_{tr}_reoptimized.nwk'.format(**params, tr="trueRates" if true_rates else "")
 
 def reoptimized_tree_true_model(prefix, params):
     return prefix+'/L{L}_n{n}_m{m}_tree{tree:02d}_model{model:02d}_seqgen{seqgen:02}_reoptimized_true_model.nwk'.format(**params)

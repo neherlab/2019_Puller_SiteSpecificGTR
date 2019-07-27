@@ -11,6 +11,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
     parser.add_argument("-m", type=float, help="simulated mutation rate")
     parser.add_argument("-n", type=int, help="number of taxa")
+    parser.add_argument("--true-rates", action='store_true', help="include estimates with true rates")
     parser.add_argument("--pc", nargs='+', default=[0.1],type=float, help="pseudo count")
     parser.add_argument("-L", type=int, help="length of sequence")
     parser.add_argument("--prefix", type=str, required=True, help="folder to retrieve data from")
@@ -23,10 +24,17 @@ if __name__ == '__main__':
     depth = {}
     terminal_bl = {}
 
-    for dset in ['true', 'ML']+args.pc:
+    for dset in ['true', 'ML']+[(pc, 'inferred-rates') for pc in args.pc]:
         length[dset]=[]
         depth[dset]=[]
         terminal_bl[dset]=[]
+
+    if args.true_rates:
+        for dset in [(pc, 'true-rates') for pc in args.pc]:
+            length[dset]=[]
+            depth[dset]=[]
+            terminal_bl[dset]=[]
+
 
     mask = "/L{L}_n{n}_m{mu}_*.fasta.gz".format(L=args.L or '*', n=args.n or '*', mu=args.m or "*")
     files = glob.glob(prefix+mask)
@@ -40,16 +48,19 @@ if __name__ == '__main__':
         true_ttl = 0.5*true_tree.total_branch_length()/params['n']
         true_depth = np.mean([x for c,x in true_tree.depths().items() if c.is_terminal()])
         true_terminal = np.mean([x.branch_length for x in true_tree.get_terminals()])
-        for dset in ['true', 'ML']+args.pc:
+        true_rates = False
+        for dset in depth.keys():
             result_prefix = args.prefix+'_results'
-            if type(dset)==float:
-                result_prefix += '_pc_%1.2f'%dset
+            if type(dset)==tuple:
+                result_prefix += '_pc_%1.2f'%dset[0]
+                true_rates = dset[1]=='true-rates'
+
             if dset=='ML':
                 tree = Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
             elif dset=='true':
                 tree = Phylo.read(reoptimized_tree_true_model(result_prefix, params), 'newick')
             else:
-                tree = Phylo.read(reoptimized_tree(result_prefix, params), 'newick')
+                tree = Phylo.read(reoptimized_tree(result_prefix, params, true_rates=true_rates), 'newick')
 
             tree.root_at_midpoint()
             tree.root.branch_length=0.001
@@ -68,7 +79,7 @@ if __name__ == '__main__':
         elif dset=='true':
             label='True model'
         else:
-            label='Inferred model, pc=%1.1f'%dset
+            label=f"Inferred model {'(true rates)' if dset[1]=='true-rates' else ''}, pc={dset[0]:1.1f}"
         plt.figure(1)
         plt.scatter(length_a[:,0], length_a[:,1], label=label)
         plt.figure(2)

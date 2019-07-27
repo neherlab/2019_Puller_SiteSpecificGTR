@@ -256,7 +256,7 @@ if __name__ == '__main__':
     plot_rate_correlation(data, n_vals_to_plot, mu_vals, [0.1, 0.5, 1.0], methods=['dressed'],
                         fname='figures/rate_correlation_dressed'+suffix)
 
-    #### Fig 3: comparison of different models as a function of tree length for one pc
+    #### comparison of different inference schemes as a function of tree length for one pc
     plot_pdist_vs_rtt(data[rate_alpha][pc_general], n_vals_to_plot, mu_vals,
                       methods=['naive', 'regular', 'marginal',
                                'iterative','iterative_true', 'optimize_tree','dressed'],
