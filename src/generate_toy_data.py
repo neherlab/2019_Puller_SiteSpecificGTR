@@ -34,7 +34,7 @@ def load_model(fname, flatten_p=0.0, flatten_mu=0.0, flatten_W=0.0):
                                     pi=d['pi']*(1-flatten_p)+flatten_p/d['pi'].shape[0],
                                     W=d['W']*(1-flatten_W) + 2*flatten_W/d['W'].shape[0]/(d['W'].shape[0]-1))
 
-def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False, alphabet='nuc_nogap', alpha=1.0):
+def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False, alphabet='nuc_nogap', alpha=1.0, rate_alpha=1.5):
     from Bio import AlignIO
     # generate a model
     T = betatree(params['n'], alpha=2.0)
@@ -50,9 +50,9 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
         params['model']=mi
         if JC:
             myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet,
-                                             pi_dirichlet_alpha=0, W_dirichlet_alpha=0)
+                                             pi_dirichlet_alpha=0, W_dirichlet_alpha=0, mu_gamma_alpha=rate_alpha)
         else:
-            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = alpha, mu_gamma_alpha=1.5)
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = alpha, mu_gamma_alpha=rate_alpha)
 
         myGTR.mu*=params['m']
 
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     parser.add_argument("--JC", action='store_true', help="simulate JC model")
     parser.add_argument("--aa", action='store_true', help="use amino acid alphabet")
     parser.add_argument("--alpha", default=1.0, type=float,  help="parameter of the dirichlet distribution for preferences")
+    parser.add_argument("--rate-alpha", default=1.5, type=float,  help="parameter of the gamma distribution for rates")
     parser.add_argument("--prefix", type=str, help="folder to save data")
     args=parser.parse_args()
 
@@ -144,5 +145,5 @@ if __name__ == '__main__':
     mu = args.m
     for ti in range(2):
         params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC, alphabet=alphabet, alpha=args.alpha)
+        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC, alphabet=alphabet, alpha=args.alpha, rate_alpha=args.rate_alpha)
 

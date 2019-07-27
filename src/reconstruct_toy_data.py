@@ -24,6 +24,7 @@ def assess_reconstruction(model, true_model):
             "model_entropy": -np.mean(np.sum(model.Pi*np.log(model.Pi), axis=0)),
             "true_entropy": -np.mean(np.sum(true_model.Pi*np.log(true_model.Pi), axis=0)),
             "chisq_mu": chisq(model.mu/model.average_rate().mean(), true_model.mu/true_model_average_rate),
+            "r_mu": np.corrcoef(model.mu, true_model.mu)[0,1],
             "chisq_W":chisq(model.W.flatten(), true_model.W.flatten())}
 
 
@@ -93,6 +94,7 @@ if __name__ == '__main__':
     W_dist = defaultdict(lambda: defaultdict(list))
     delta_LH = defaultdict(lambda: defaultdict(list))
     avg_rate = defaultdict(lambda: defaultdict(list))
+    mucorr_dist = defaultdict(lambda: defaultdict(list))
 
     mu_vals = set()
     n_vals = set()
@@ -140,6 +142,7 @@ if __name__ == '__main__':
         p_dist["dressed"][dset].append(accuracy["chisq_p"])
         p_entropy["dressed"][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
         mu_dist["dressed"][dset].append(accuracy["chisq_mu"])
+        mucorr_dist["dressed"][dset].append(accuracy["r_mu"])
 
         for tree in [tree_name(prefix, params), reconstructed_tree_name(prefix, params)]:
             for ana in analysis_types_tree:
@@ -150,6 +153,7 @@ if __name__ == '__main__':
                     p_dist[ana+s][dset].append(accuracy["chisq_p"])
                     p_entropy[ana+s][dset].append([accuracy["model_entropy"], accuracy["true_entropy"]])
                     mu_dist[ana+s][dset].append(accuracy["chisq_mu"])
+                    mucorr_dist[ana+s][dset].append(accuracy["r_mu"])
 
                 delta_LH[ana+s][dset].append( (true_LH, accuracy['LH'] ))
                 avg_rate[ana+s][dset].append(( true_model_average_rate, accuracy['avg_rate']))
@@ -165,4 +169,4 @@ if __name__ == '__main__':
                                         for n in ['L', 'n', 'm'] if args.__getattribute__(n)]) + '.pkl'
         with open(out_fname, 'wb') as fh:
             pickle.dump((sorted(mu_vals), sorted(n_vals), dict(p_dist), dict(p_entropy), dict(mu_dist),
-                         dict(W_dist), dict(delta_LH), dict(avg_rate)), fh)
+                         dict(W_dist), dict(delta_LH), dict(avg_rate), dict(mucorr_dist)), fh)

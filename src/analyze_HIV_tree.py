@@ -24,7 +24,11 @@ def convert_vals(x):
 
 def load_fitness_landscape(gene, aa=False, subtype='B'):
     import pandas as pd
-    d = pd.read_csv('HIV_fitness_landscape/data/fitness_pooled/nuc_%s_selection_coeffcients_%s.tsv'%(gene, subtype),
+    if aa:
+        d = pd.read_csv('HIV_fitness_landscape/data/fitness_pooled_aa/aa_%s_fitness_costs_uncensored_st_%s.tsv'%(gene, subtype),
+                    sep='\t', skiprows=1)
+    else:
+        d = pd.read_csv('HIV_fitness_landscape/data/fitness_pooled/nuc_%s_selection_coeffcients_uncensored_%s.tsv'%(gene, subtype),
                     sep='\t', skiprows=1)
     for col in d.columns[3:6]:
         d.loc[:,col] = d.loc[:,col].apply(convert_vals)
@@ -39,11 +43,12 @@ def calculate_in_out_ratio(gtr, major_allele):
     '''
     major_index = np.zeros_like(major_allele, dtype=int)
     for ni, n in enumerate(gtr.alphabet):
-        major_index[major_allele==n]=ni
+        major_index[major_allele==n.decode()]=ni
+    #major_index = np.argmax(gtr.Pi, axis=0)
 
     r_ind = np.arange(gtr.Pi.shape[-1])
-    return np.einsum('a,aj->a', gtr.Pi[major_index, r_ind], gtr.W[major_index])/\
-           np.einsum('aj,ja->a', gtr.W[major_index], gtr.Pi)
+    return np.einsum('a,a,aj->a', gtr.mu, gtr.Pi[major_index, r_ind], gtr.W[major_index])/\
+           np.einsum('a,aj,ja->a', gtr.mu, gtr.W[major_index], gtr.Pi)
 
 
 def diversity(p):
@@ -61,13 +66,14 @@ if __name__ == '__main__':
     parser.add_argument("--redo", action='store_true', default=False, help="re-estimate")
     args=parser.parse_args()
 
-    alphabet='aa' if args.aa else 'nuc'
+    alphabet='aa' if args.aa else 'nuc_nogap'
     pc = args.pc
+    fs = 16
 
-    aln = args.prefix +  '_aligned.fasta'
+    aln = args.prefix +  ('_aa-aligned.fasta' if args.aa else '_aligned.fasta')
     tree = args.prefix + '_tree.nwk'
-    model_name = hiv_out + os.path.basename(aln)[:-5]+'%1.2f_inferred_model.npz'%args.pc
-    aln_freq_name = hiv_out + os.path.basename(aln[:-5])+'alignment_frequencies'
+    model_name = hiv_out + os.path.basename(aln)[:-5]+'%1.2f_inferred_model%s.npz'%(args.pc, '_aa' if args.aa else '')
+    aln_freq_name = hiv_out + os.path.basename(aln[:-5])+'alignment_frequencies%s'%( '_aa' if args.aa else '')
 
     gtr=None
     aln_freq=None
@@ -79,8 +85,10 @@ if __name__ == '__main__':
             pass
     if gtr is None:
         tt = TreeAnc(tree=tree, aln = aln, compress=False, alphabet=alphabet, verbose=3)
-        tt.optimize_tree(branch_length_mode='marginal', max_iter=10,
-                         infer_gtr=True, site_specific_gtr=True, pc=pc)
+        # tt.optimize_tree(branch_length_mode='marginal', max_iter=10,
+        #                  infer_gtr=True, site_specific_gtr=True, pc=pc)
+
+        tt.infer_gtr_iterative(max_iter=10, site_specific=True, pc=pc)
 
         gtr = tt.gtr
         save_model(gtr, model_name)
@@ -90,30 +98,49 @@ if __name__ == '__main__':
         np.savetxt(aln_freq_name, aln_freq)
 
     fabio_fitness = load_fitness_landscape(args.gene, subtype=args.subtype, aa=args.aa)
+    valid = np.isfinite(fabio_fitness['median'])
 
     fitness_estimates_gtr = calculate_in_out_ratio(gtr, fabio_fitness.loc[:,"consensus"])
 
-    ccoef=spearmanr
+    ccoef=pearsonr
+    #ccoef=spearmanr
     div_rec = diversity(gtr.Pi)
-    cc_rec = ccoef(fabio_fitness['median'], div_rec)
+    cc_rec = ccoef(np.log(fabio_fitness['median'])[valid], np.log(1e-10+div_rec)[valid])
     plt.figure()
     plt.scatter(fabio_fitness['median'], div_rec, label='reconstructed, r2=%1.2f'%cc_rec[0]**2)
     plt.legend()
-    plt.xlim([3e-4, 3e-1])
+    plt.xlim([3e-5, 3e0])
+    plt.ylim([3e-5, 1.5])
+    plt.yscale('log')
     plt.xscale('log')
 
     div_aln = diversity(aln_freq)
-    cc_aln = ccoef(fabio_fitness['median'], div_aln)
+    cc_aln = ccoef(np.log(fabio_fitness['median'][valid]), np.log(1e-10+div_aln)[valid])
     plt.figure()
     plt.scatter(fabio_fitness['median'], div_aln, label='alignment, r2=%1.2f'%cc_aln[0]**2)
     plt.legend()
-    plt.xlim([3e-4, 3e-1])
+    plt.xlim([3e-5, 3e-0])
+    plt.ylim([3e-5, 1.5])
+    plt.yscale('log')
     plt.xscale('log')
 
 
     plt.figure()
-    plt.scatter(fabio_fitness['median'], fitness_estimates_gtr, label='fitness vs fitness')
+    cc_fit = ccoef(np.log(fabio_fitness['median'][valid]), np.log(1e-10+fitness_estimates_gtr)[valid])
+    plt.scatter(fabio_fitness['median'], fitness_estimates_gtr, label=r'$r^2=$'+'%1.2f'%cc_fit[0]**2)
+    plt.legend(fontsize=fs)
+    plt.xlim([3e-5, 3e0])
+    plt.ylim([3e-2, 3e3])
+    plt.xlabel('intra-host fitness estimates', fontsize=fs)
+    plt.ylabel('GTR based fitness estimates', fontsize=fs)
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.tick_params(labelsize=0.8*fs)
+    plt.tight_layout()
+    plt.savefig('figures/'+args.prefix.split('/')[-1]+'_fitness_pc_%1.3f'%args.pc+ ('_aa' if args.aa else '')+'.pdf')
+
+    plt.figure()
+    plt.scatter(fabio_fitness['median'], gtr.mu,  label='fitness vs rate')
     plt.legend()
-    plt.xlim([3e-4, 3e-1])
     plt.xscale('log')
     plt.yscale('log')

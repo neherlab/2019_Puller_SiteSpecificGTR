@@ -10,10 +10,10 @@ from reconstruct_toy_data import *
 
 
 
-def run_tree(fname, out_prefix, alphabet, true_tree=False, true_model=False):
+def run_tree(fname, out_prefix, alphabet, true_tree=False, true_model=False, pc=0.1):
     params = parse_alignment_name(fname)
     m = params['m']
-    tree = Phylo.read(tree_name(prefix, params), 'newick') if args.true_tree else  Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
+    tree = Phylo.read(tree_name(prefix, params), 'newick') if true_tree else  Phylo.read(reconstructed_tree_name(prefix, params), 'newick')
     tree.root.branch_length = 0.001
     tree.ladderize()
     old_bl = []
@@ -21,7 +21,7 @@ def run_tree(fname, out_prefix, alphabet, true_tree=False, true_model=False):
     print(tree.root.clades[0].branch_length/tree.root.clades[1].branch_length)
     for n in tree.find_clades():
         old_bl.append(n.branch_length)
-        if args.true_tree:
+        if true_tree:
             n.branch_length *= m*(0.6+0.4*np.random.random())
     print(np.sum(old_bl)*(m if true_tree else 1.0),m)
     if true_model:
@@ -37,16 +37,17 @@ def run_tree(fname, out_prefix, alphabet, true_tree=False, true_model=False):
                  alphabet=alphabet, verbose=3)
 
     tt.optimize_tree(branch_length_mode='marginal', max_iter=n_iter,
-                     infer_gtr=not args.true_model, site_specific_gtr=True, pc=args.pc)
+                     infer_gtr=not true_model, site_specific_gtr=True, pc=pc, damping=0.75)
+
+    new_bl = []
+    for n in tt.tree.find_clades():
+        new_bl.append(n.branch_length)
+
 
     print(tt.tree.total_branch_length(),tt.gtr.average_rate().mean())
     # tt.tree.root_at_midpoint()
     tfname = reoptimized_tree_true_model(out_prefix, params) if args.true_model else reoptimized_tree(out_prefix, params)
     Phylo.write(tt.tree, tfname, 'newick')
-
-    new_bl = []
-    for n in tt.tree.find_clades():
-        new_bl.append(n.branch_length)
 
     print(np.mean([x for c,x in tt.tree.depths().items() if c.is_terminal()]), tt.tree.total_branch_length())
     print(tt.tree.root.clades[0].branch_length/tt.tree.root.clades[1].branch_length)
@@ -77,9 +78,12 @@ if __name__ == '__main__':
     else:
         out_prefix = prefix+'_results_pc_%1.2f'%args.pc
 
-    if not os.path.isdir(out_prefix):
-        os.mkdir(out_prefix)
+    try:
+        if not os.path.isdir(out_prefix):
+            os.mkdir(out_prefix)
+    except:
+        pass
 
     for fname in files:
         print(fname)
-        run_tree(fname, out_prefix, alphabet, args.true_tree, args.true_model)
+        run_tree(fname, out_prefix, alphabet, args.true_tree, args.true_model, pc=args.pc)
