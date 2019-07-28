@@ -18,6 +18,7 @@
 \newcommand{\vecb}[1]{{\bf #1}}
 \newcommand{\abet}{\mathcal{A}}
 \newcommand{\eqp}{p}
+\newcommand{\pc}{c}
 \newcommand{\LH}{\mathcal{L}}
 \newcommand{\lh}{\ell}
 \pdfinfo{%
@@ -103,14 +104,14 @@ Extending the iterative expectation maximization approach by \citet{bruno1996mod
 \begin{equation}
 \label{eq:update}
 	\begin{split}
-		\mu^b & \leftarrow \mu^b\frac{C+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
-		\eqp^b_i & \leftarrow \eqp^b_i\frac{C+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(qC+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
+		\mu^b & \leftarrow \mu^b\frac{\pc+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
+		\eqp^b_i & \leftarrow \eqp^b_i\frac{\pc+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(q\pc+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
 		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\tau_j^b + \eqp_j^b \tau_i^b)} \\
 	\end{split}
 \end{equation}
 approximately maximize the likelihood of the data.
 Here $\tau^b_j$ is the time site $b$ spends in state $j$ across the tree and $n^b_{ij}$ are the number of transitions from state $j$ to state $i$ at site $b$
-$C$ is a pseudocount analogous to a Dirichlet prior that  in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $C$ over the total tree length.
+$\pc$ is a pseudocount analogous to a Dirichlet prior that  in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $\pc$ over the total tree length.
 To make the behavior of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\tau_j^b$ -- each appropriately summed over sites or states.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -167,7 +168,7 @@ Similar improvements are achieved by optimizing tree branch lengths along with t
 As previously observed by various authors \citep{halpern_evolutionary_1998,hilton_modeling_2018}, sites with heavily skewed preferences for specific states result in underestimation of branch lengths if uniform equilibrium frequencies are assumed.
 This is a straightforward consequence of the fact that the probability of observing the same state at random is $\sum_i{\eqp_i^a}^2$ is increasing sharply with more peaked preferences.
 Models that don't account for site specific frequencies will take a large number of sites that agree between two sequences as evidence for their close evolutionary relationship, while it is simply a consequence of resampling the same states with high probability.
-In other words, this underestimation is the result of incorrect models of saturation.
+In other words, this underestimation is the result of incorrect models of saturation and is closely related to the observation that incomplete purifying selection can result in erroneous and apparently time dependent rate estimates \citet{wertheim_purifying_2011}.
 
 \begin{figure*}[tb]
 	\centering
@@ -196,7 +197,7 @@ The underestimation of branch lengths is less of a problem when using larger alp
 	\label{fig:model_deviation}
 \end{figure}
 
-Surprisingly, the inferred site specific model only partially rectify the problem of branch length under-estimation, despite the fact that these models are close to the true model in terms of low $\chi^2$.
+Surprisingly, the inferred site specific model only partially rectifies the problem of branch length under-estimation, despite the fact that these models are close to the true model in terms of low $\chi^2$.
 The principle contributor to this deviation are inaccuracies in the rate estimates and combining the true rates with inferred preferences largely eliminates the error in branch length estimation.
 If, however, preferences are estimated poorly for example through excessive regularization ($\pc=10$ in Fig.~\ref{fig:tree_length}), using the correct rates hardly improves the estimate.
 The latter is consistent with the observation that standard ML tree inference using IQ-tree with a GTR+R10 model severely underestimates branch lengths.
@@ -257,7 +258,19 @@ The ratio of in/out rates $e^{-2Ns_i^a}$ is, however, a very good correlate of a
 	\label{fig:HIV_fitness}
 \end{figure*}
 
+Next, we quantified the effect that ignoring site-specific preferences has on branch length estimates.
+We generated sequence pairs that evolved for a specific time $t$ under the inferred site-specific model and then inferred a maximum likelihood branch length between these two sequences using a model with the average preferences and the same per site rate variation.
+As soon as the length of the simulated branch approaches 0.2, the length inferred by a model without site-specific preferences deviates substantially from the true value and saturates around 0.5 for larger and larger $t$.
+As expected, these deviations are even more severe when estimating branch length as simple sequence divergence (p-distance), while using the generating model reproduces the correct branch length.
 
+\begin{figure*}[tb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{{../figures/HIV_B_pol_branch_length_error_pc_0.010}.pdf}
+	\caption{{\bf Underestimation of divergence in HIV.}
+	  Panel A shows the estimated ML branch length for the model used to generate the sequences and a model with constant equilibrium frequencies as a function of true branch length. For comparison, the p-distance between the two simulated sequences is also shown. The top axis shows branch length in units of years assuming a substitution rate of 0.002/year. Error bars denote one standard deviation.
+      Panel B shows the distribution of rates across sites for both models. They differ slightly in the overall scale since rates have been rescaled such that the average substitution rate in both models is identical.}
+	\label{fig:HIV_branch_length}
+\end{figure*}
 
 
 \section*{Discussion}
@@ -275,31 +288,32 @@ The computational complexity of the inference is dominated by ancestral reconstr
 We have implemented the algorithm for site-specific model inference and branch lengths optimization in TreeTime \citep{sagulenko2017treetime}.
 
 
-We further explored how model choice affects the maximum likelihood estimates of branch length.
+We further explored how model choice affects the maximum likelihood estimates of branch lengths.
 As has been reported before, branch length are underestimated when variation in rate or preferences are not fully accounted for \citep{halpern1998evolutionary,hilton_modeling_2018}.
 While such underestimation often has a moderate effect on the total length of a tree, it can result in substantial underestimation of root-to-tip distance that are dominated by a few long branches close to the root.
 While using the correct model results in correct branch length estimates, joint inference of site-specific models and branch lengths is typically unable to recover the true branch lengths and substantial underestimation remains.
 This mirrors observations by \citet{hilton_modeling_2018}, who found that preferences measured for influenza HA proteins of type H1 or H3 affect branch length of in the vicinity of the focal sequence, but not globally on the tree.
+Using site-specific models inferred from HIV alignments, we quantified the error made when ignoring site-specific preferences.
+While the true models are unknown in this case, this analysis nevertheless suggests that errors are substantial as soon as branch length exceed $t=0.2$ and sequence divergence saturates at levels around 0.3.
+This result is consistent with the observation of frequent reversion of HIV to a preferred sequence state \citep{zanini2015population,carlson_selection_2014,leslie_hiv_2004}.
+Average nucleotide distances between \gene{pol} sequences between HIV-1 subtypes are on the order of 0.1, HIV-1 and SIVcpz are on the order of 0.25 and between sequences in the HIV-1/HIV-2/SIV compendium alignment about 0.35 (all distances ignore sites with $>20$\% gaps).
 
-The potentially large error in branch length estimating can seriously affect deep divergence time estimates.
+
+This potentially large error in branch length estimates can seriously affect deep divergence time estimates.
 Typically, short branches close to the tips of the tree are used to calibrate molecular clock models.
 The deep branches, however, tend to be much longer and rate estimation and variation of site specific preferences will result in saturation effects not accounted for by the model \citep{hilton_modeling_2018}.
-This effective variation in rate is related to the effect of transient deleterious mutations that inflate the rate on short time scales \citep{ho_time_2005}: the time it takes purifying selection to prune deleterious mutations is related to the relaxation time scales of GTR models with site specific preferences.
+This effective variation in rate is related to the effect of transient deleterious mutations that inflate the rate on short time scales \citep{ho_time_2005,wertheim_purifying_2011}: the time it takes purifying selection to prune deleterious mutations is related to the relaxation time scales of GTR models with site specific preferences.
 Instead of the $q-1$ degenerate eigenvalues of a Jukes-Cantor model, each site has a spectrum of eigenvalues and different eigenmodes relax at different speeds, generating apparently time dependent rates.
 
 While accurate estimates of the site-specific GTR models are a possible given a large enough set of mildly diverged sequences, joint infererence of model and branch lengths remains difficult.
 This difficulty can be largely traced down to poorly constrained estimates of site-specific rates -- one primary reason why these rates are typically not estimated but treated as random effects \citep{yang1996among}.
 
+Estimating site-specific models from sequence alignments faces one fundamental problem:
+Reliable estimates require observation of many changes at each site which requires many sufficiently diverged sequences.
+At the same time, preferences at individual sites are expected to change due to epistatic interactions with other sites in the sequence, as for example witnessed by the gradual divergence of experimentally determined preferences \citep{doud_site-specific_2015,haddox_mapping_2018}.
+Hence the approach described in this work is largely restricted to cases like HIV where many moderately diverged sequences ($\sim$10\%) are available.
+Outside of this limit there either isn't enough data to reliably estimate the large number of coefficients, or epistatic interactions need to be taken into account -- probably at the expense of ignoring phylogenetic signals \citep{morcos_direct-coupling_2011}.
 
-
-
-
-\begin{itemize}
-	\item underestimation of long branches, dubious deep time trees
-	\item relation to frequent reversions
-	\item fitness inference, functional constraints
-	\item caveat about interactions
-\end{itemize}
 
 \bibliography{GTRbib}
 
@@ -379,12 +393,12 @@ This condition (and the corresponding ones in the supplement suggest solution at
 \begin{equation}
 \label{eq:update}
 	\begin{split}
-		\mu^b & \leftarrow \mu^b\frac{C+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
-		\eqp^b_i & \leftarrow \eqp^b_i\frac{C+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(qC+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
+		\mu^b & \leftarrow \mu^b\frac{\pc+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
+		\eqp^b_i & \leftarrow \eqp^b_i\frac{\pc+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(q\pc+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
 		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\tau_j^b + \eqp_j^b \tau_i^b)} \\
 	\end{split}
 \end{equation}
-where $C$ is a pseudocount analogous to a Dirichlet prior that in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $C$ over the total tree length.
+where $\pc$ is a pseudocount analogous to a Dirichlet prior that in absense of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $\pc$ over the total tree length.
 To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\tau_j^b$ -- each appropriately summed over sites or states.
 
 
