@@ -27,7 +27,7 @@ def p_from_aln(aln, alphabet='nuc_nogap'):
     aln_array = np.array(aln)
     af = []
     for a in alpha:
-        af.append(np.mean(aln_array==a.decode(), axis=0))
+        af.append(np.mean(aln_array==a, axis=0))
     return np.array(af)
 
 

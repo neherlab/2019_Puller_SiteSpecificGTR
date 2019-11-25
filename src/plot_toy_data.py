@@ -121,7 +121,7 @@ def plot_pdist_vs_rtt(data, n_vals, mu_vals, methods, fname=None):
 def plot_pentropy_vs_rtt(data, n_vals, mu_vals, pc_vals, methods=None, fname=None):
     # for each data set size, plot the difference in entropy between the inferred and true
     # equilibrium frequencies.
-    line_styles = ['--','-.','-']
+    line_styles = ['--','-.','-', ':']
     plt.figure()
     for n in n_vals:
         rtt = np.log(n)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     L=1000
     for rate_alpha in [1.5, 3.0]:
         data[rate_alpha]={}
-        for pc in [0.1, 0.5, 1.0]:
+        for pc in [0.01, 0.1, 0.5, 1.0]:
             tmp, n_vals, mu_vals = load_toy_data_results(args.prefix.replace('XXX', str(rate_alpha)) + '_results_pc_%1.2f/'%pc)
             data[rate_alpha][pc]=tmp
 
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     plot_avg_rate(data[rate_alpha][pc_general], n_vals_to_plot, mu_vals, methods=['dressed'],
                         fname='figures/avg_rate_dressed'+suffix)
 
-    plot_rate_correlation(data, n_vals_to_plot, mu_vals, [0.1, 0.5, 1.0], methods=['dressed'],
+    plot_rate_correlation(data, n_vals_to_plot, mu_vals, [0.01, 0.1, 0.5, 1.0], methods=['dressed'],
                         fname='figures/rate_correlation_dressed'+suffix)
 
     #### comparison of different inference schemes as a function of tree length for one pc
@@ -267,7 +267,7 @@ if __name__ == '__main__':
                                 'iterative_true', 'optimize_tree'],
                       fname='figures/mu_dist_vs_rtt'+suffix)
 
-    plot_pentropy_vs_rtt(data[rate_alpha], n_vals_to_plot, mu_vals, pc_vals=[0.1, 0.5, 1.0],
+    plot_pentropy_vs_rtt(data[rate_alpha], n_vals_to_plot, mu_vals, pc_vals=[0.01, 0.1, 0.5, 1.0],
                          methods=['naive', 'dressed'],
                          fname='figures/p_entropy_vs_rtt'+suffix)
 
