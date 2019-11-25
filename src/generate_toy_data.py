@@ -28,13 +28,60 @@ def load_mutation_count(fname):
 
 
 def load_model(fname, flatten_p=0.0, flatten_mu=0.0, flatten_W=0.0):
+    """load a model from file and optionally dampen variation of rates
+    frequencies by mixing it with a jukes cantor model.
+
+    Parameters
+    ----------
+    fname : str
+        file name of model
+    flatten_p : float, optional
+        add flatten_p of a JC model to the frequency vector
+    flatten_mu : float, optional
+        add flatten_p of a JC model to the rate vector
+    flatten_W : float, optional
+        add flatten_p of a JC model to the substitution matrix
+
+    Returns
+    -------
+    GTR
+        site specific GTR model
+    """
     d = np.load(fname)
     return GTR_site_specific.custom(alphabet=d['alphabet'],
                                     mu=d['mu']*(1-flatten_mu) + flatten_mu*np.mean(d['mu']),
                                     pi=d['pi']*(1-flatten_p)+flatten_p/d['pi'].shape[0],
                                     W=d['W']*(1-flatten_W) + 2*flatten_W/d['W'].shape[0]/(d['W'].shape[0]-1))
 
-def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=False, alphabet='nuc_nogap', alpha=1.0, rate_alpha=1.5):
+
+def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5,
+            JC=False, alphabet='nuc_nogap', alpha=1.0, rate_alpha=1.5, W_dirichlet_alpha=2.0):
+    """Generate a tree and random GTR model with frequency parameters sampled
+    from a Dirichlet distribution on the simplex
+
+    Parameters
+    ----------
+    params : dict
+        dictionary with parameters of the evolutionary process, sample size etc
+    out_prefix : None, optional
+        save the generated data using this prefix and otherwise standardized file names
+    yule : bool, optional
+        generate a Yule tree instead of a Kingman Coalesccent tree
+    n_model : int, optional
+        number of distinct models to draw for each tree
+    n_seqgen : int, optional
+        number of times sequences are evolved for each tree/model combination
+    JC : bool, optional
+        Use a Jukes Cantor model
+    alphabet : str, optional
+        alphabet of the GTR model
+    alpha : float, optional
+        parameter of the Dirichlet distribution for frequencies
+    rate_alpha : float, optional
+        parameter of the rate distribution (Gamma)
+    W_dirichlet_alpha : float, optional
+        parameter of the Dirichlet distribution of W matrix elements
+    """
     from Bio import AlignIO
     # generate a model
     T = betatree(params['n'], alpha=2.0)
@@ -50,9 +97,10 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
         params['model']=mi
         if JC:
             myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet,
-                                             pi_dirichlet_alpha=0, W_dirichlet_alpha=0, mu_gamma_alpha=rate_alpha)
+                                             pi_dirichlet_alpha=False, W_dirichlet_alpha=False, mu_gamma_alpha=rate_alpha)
         else:
-            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = alpha, mu_gamma_alpha=rate_alpha)
+            myGTR = GTR_site_specific.random(L=params['L'], alphabet=alphabet, pi_dirichlet_alpha = alpha,
+                                             mu_gamma_alpha=rate_alpha, W_dirichlet_alpha=W_dirichlet_alpha)
 
         myGTR.mu*=params['m']
 
@@ -62,7 +110,7 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
         for si in range(n_seqgen):
             params['seqgen']=si
             # generate sequences
-            mySeq = SeqGen(gtr=myGTR, tree=T.BioTree)
+            mySeq = SeqGen(params['L'], gtr=myGTR, tree=T.BioTree)
             mySeq.evolve()
 
             if out_prefix:
@@ -74,6 +122,17 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5, JC=Fa
 
 
 def reconstruct_tree(prefix, params, aa=False):
+    """reconstruct a tree from sequences using fasttree or IQ-tree
+
+    Parameters
+    ----------
+    prefix : str
+        prefix to save the output
+    params : dict
+        parameter dictionary
+    aa : bool, optional
+        assume amino acid alignment.
+    """
     aln_file = alignment_name_raw(prefix, params)
     out_tree = reconstructed_tree_name(prefix, params)
     if aa:
@@ -96,7 +155,23 @@ def reconstruct_tree(prefix, params, aa=False):
     rec_tree.ladderize()
     Phylo.write(rec_tree, out_tree, 'newick')
 
+
 def get_ancestral_mutation_count(tree, alphabet):
+    """compute the number of times a change from state j to i is observed
+    in a tree that is decorated with the true ancestral sequences.
+
+    Parameters
+    ----------
+    tree : Phylo.Tree
+        tree decorated with ancestral sequences
+    alphabet : array
+        alphabet of the GTR model used to generate the data
+
+    Returns
+    -------
+    tuple
+        matrix stack of observed changes, time spend in each state, and ancestral sequence
+    """
     alphabet_to_index = {a:ai for ai,a in enumerate(alphabet)}
     L = tree.seq_len
     q = len(alphabet)
@@ -145,5 +220,6 @@ if __name__ == '__main__':
     mu = args.m
     for ti in range(2):
         params = {'L':L, 'n':n, 'm':mu, 'tree':ti}
-        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC, alphabet=alphabet, alpha=args.alpha, rate_alpha=args.rate_alpha)
+        simplex(params, out_prefix=prefix, n_model=2, n_seqgen=2, yule=True, JC=args.JC,
+                alphabet=alphabet, alpha=args.alpha, rate_alpha=args.rate_alpha)
 

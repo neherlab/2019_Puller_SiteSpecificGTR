@@ -12,12 +12,15 @@ parser.add_argument("--date", type=str,  help="date prefix")
 parser.add_argument("--submit", action='store_true', help="submit")
 args=parser.parse_args()
 today = args.date or date.today().strftime('%Y-%m-%d')
-rate_alpha=0
-datasets = [#(1.0, False, False),
-    (0.0, True, False)] #, (0.2, False, True), (0.5, False, True)]
 
-for alpha, JC, aa in datasets:
-    prefix = '%s_simulatedData_L%d_ratealpha%1.1f_alpha%1.1f_%s'%(today, L, rate_alpha, alpha, "aa" if aa else "nuc") + ("_JC" if JC else "")
+#           alpha, rate_alpha, JC, amino-acid
+datasets = [(1.0, 1.5, False, False) ]#,
+#            (0.0, 1.5, True, False)],
+#            (0.2, 1.5, False, True),
+#            (0.5, 1.5, False, True)]
+
+for alpha, rate_alpha, JC, aa in datasets:
+    prefix = f'{today}_simulatedData_L{L}_ratealpha{rate_alpha:1.1f}_freqalpha{alpha:1.1f}_{"aa" if aa else "nuc"}' + ("_JC" if JC else "")
 
     for n in args.nvals:
         submit_script = "submit.sh" if n>500 else "submit_small.sh"

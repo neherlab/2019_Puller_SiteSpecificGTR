@@ -11,7 +11,8 @@
 #SBATCH --time=23:59:00
 ##SBATCH --time=05:59:00
 
-source ~/.bashrc
+source /scicore/home/neher/neher/miniconda3/etc/profile.d/conda.sh
+conda activate
 
 echo $@
 
