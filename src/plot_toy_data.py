@@ -1,79 +1,75 @@
-import glob, pickle
+import glob, pickle, os
 import numpy as np
+import pandas as pd
 from collections import defaultdict
+from matplotlib import pyplot as plt
 
 fmts = ['.png', '.pdf']
 fs = 12
 
 labels = {'naive':"Alignment frequencies",
           "dressed":"Known ancestral sequences",
-          "regular":"Reconstructed ancestral sequences",
-          "marginal":"Marginalized ancestral sequences",
+          "ml_reconstruction":"Reconstructed ancestral sequences",
+          "marginalize":"Marginalized ancestral sequences",
           "iterative":"Iterative model estimation",
           "optimize_tree":"Iterative tree and model optimization",
           "optimize_tree_true":"Optimize tree(true) and model",
           "iterative_true":"Iterative model estimation (true tree)",
-          "regular_true":"Reconstructed ancestral sequences",
-          "marginal_true":"Marginalized ancestral sequences",
+          "ml_reconstruction_true":"Reconstructed ancestral sequences",
+          "marginalize_true":"Marginalized ancestral sequences",
     }
 colors = {k:'C%d'%((i+1)%10) for i,k in enumerate(labels.keys())}
 
+
 def load_toy_data_results(path):
-    mu_dist = defaultdict(lambda: defaultdict(list))
-    p_dist = defaultdict(lambda: defaultdict(list))
-    p_entropy = defaultdict(lambda: defaultdict(list))
-    W_dist = defaultdict(lambda: defaultdict(list))
-    delta_LH = defaultdict(lambda: defaultdict(list))
-    avg_rate = defaultdict(lambda: defaultdict(list))
-    mucorr_dist = defaultdict(lambda: defaultdict(list))
+    tsv_files = glob.glob(os.path.join(path, "*tsv"))
+    df = pd.concat([pd.read_csv(fname, sep='\t') for fname in tsv_files])
+    return df
 
-    mu_vals = set()
-    n_vals = set()
+def make_subset(data, conditions):
+    ind = np.ones(len(data), dtype=bool)
+    for k, v in conditions.items():
+        if k in data.columns:
+            ind = ind&(data[k]==v)
+        else:
+            raise ValueError(f"column '{k}' not in dataframe")
 
-    for fname in glob.glob(path+'*.pkl'):
-        with open(fname, 'rb') as fh:
-            tmp_mu_vals, tmp_n_vals, tmp_p_dist, tmp_p_entropy, \
-                tmp_mu_dist, tmp_W_dist, tmp_LH, tmp_avg_mu, tmp_mucorr = pickle.load(fh)
+    return data[ind]
 
-        n_vals.update(tmp_n_vals)
-        mu_vals.update(tmp_mu_vals)
-
-        for d,tmp_d in [(mu_dist, tmp_mu_dist), (W_dist, tmp_W_dist), (p_dist, tmp_p_dist),
-                        (p_entropy, tmp_p_entropy), (delta_LH, tmp_LH),
-                         (avg_rate, tmp_avg_mu), (mucorr_dist, tmp_mucorr)]:
-            for x in tmp_d:
-                for y in tmp_d[x]:
-                    d[x][y].extend(tmp_d[x][y])
-
-    n_vals = np.array(sorted(n_vals))
-    mu_vals = np.array(sorted(mu_vals))
-
-    return {'mu': mu_dist, 'p':p_dist, 'S':p_entropy, 'W':W_dist, 'LH':delta_LH,
-            'avg_rate':avg_rate, 'mucorr':mucorr_dist}, n_vals, mu_vals
+def make_means(data, conditions):
+    from itertools import product
+    keys = list(conditions.keys())
+    values = [conditions[x] for x in keys]
+    res = {}
+    for combination in product(*values):
+        tmp_cond =  {k:v for k,v in zip(keys, combination)}
+        print(tmp_cond)
+        subset = make_subset(data, tmp_cond)
+        res[tuple(tmp_cond.items())] = {'mean':subset.groupby('m').mean(),
+                                        'std':subset.groupby('m').std()}
+    return res
 
 
-def plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=None, fname=None):
+def plot_pdist_vs_tree_length(data, subsets, fname=None):
     # plot the squared distance of the inferred equilibrium frequencies
     # from the true frequencies as a function of total tree length. we expect this to be 1/n
     # We assume a Yule tree here, that is the total tree length can be calculated as:
     # dk/dt = -k, hence int_t k(t) = n
     plt.figure()
-    ls = {n:l for n,l in zip(sorted(n_vals, reverse=True), ['-', '--', '-.', ':'])}
-    cols = {n:'C%d'%i for i,n in enumerate(n_vals)}
-    for label, dset in data["p"].items():
-        if methods and label not in methods:
-            continue
-        for n in n_vals:
-            d = []
-            for mu in mu_vals:
-                # vector of expected number of subs, mean distance, and std_dev
-                d.append((n*mu, np.mean(dset[(L,n,mu)]), np.std(dset[(L,n,mu)])))
+    ls = {n:l for n,l in zip(sorted(subsets['n'], reverse=True), ['-', '--', '-.', ':'])}
+    cols = {n:'C%d'%i for i,n in enumerate(subsets['n'])}
 
-            d = np.array(sorted(d, key=lambda x:x[0]))
-            plt.errorbar(d[:,0], d[:,1], d[:,2], lw=2, ls=ls[n],
-                         label=labels[label] if n==n_vals[-1] else '', c=colors[label])
-            if label=='naive':
-                plt.text(d[0,0], d[0,1]*1.2, r'$n='+str(n)+'$', fontsize=fs*0.8)
+    mean_vals = make_means(data, subsets)
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        subs_per_site = d['mean'].index*tmp_p['n']
+        plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
+                     label=labels[tmp_p['method']] if tmp_p['n']==np.max(subsets['n']) else '',
+                     c=colors[tmp_p['method']], ls=ls[tmp_p['n']])
+
+        if tmp_p['method']=='naive':
+            plt.text(subs_per_site[0], d['mean']['chisq_p'].iloc[0]*1.2,
+                    f"n={tmp_p['n']}", fontsize=fs*0.8)
 
     plt.plot([10,1000], [0.1,0.001], label=r'$\sim x^{-1}$', c='k')
     plt.ylim([0.001, 1.6])
@@ -90,20 +86,20 @@ def plot_pdist_vs_tree_length(data, n_vals, mu_vals, methods=None, fname=None):
             plt.savefig(fname+fmt)
 
 
-def plot_pdist_vs_rtt(data, n_vals, mu_vals, methods, fname=None):
+def plot_pdist_vs_rtt(data, subsets, fname=None):
     # for each data set size, plot the distance of the inferred equilibrium frequencies
     # from the their true values. This is plotted vs the root-to-tip distance, which
     # determines the reconstruction accuracy. Given that we use Yule trees, the rtt is
     # roughly log(n)
 
     plt.figure()
-    for n in n_vals:
-        rtt = np.log(n)
-        for label in methods:
-            d=data['p'][label]
-            plt.errorbar(mu_vals*rtt, [np.mean(d[(L,n,mu)]) for mu in mu_vals],
-                        [np.std(d[(L,n,mu)]) for mu in mu_vals],
-                        c=colors[label], label=labels[label] if n==n_vals[0] else '')
+    mean_vals = make_means(data, subsets)
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        rtt = d['mean'].index*np.log(tmp_p['n'])
+        plt.errorbar(rtt, d['mean']['chisq_p'], d['std']['chisq_p'],
+                     label=labels[tmp_p['method']] if tmp_p['n']==subsets['n'][0] else '',
+                     c=colors[tmp_p['method']])
 
     plt.yscale('log')
     plt.xscale('log')
@@ -118,21 +114,21 @@ def plot_pdist_vs_rtt(data, n_vals, mu_vals, methods, fname=None):
             plt.savefig(fname+fmt)
 
 
-def plot_pentropy_vs_rtt(data, n_vals, mu_vals, pc_vals, methods=None, fname=None):
+def plot_pentropy_vs_rtt(data, subsets, fname=None):
     # for each data set size, plot the difference in entropy between the inferred and true
     # equilibrium frequencies.
     line_styles = ['--','-.','-', ':']
+    mean_vals = make_means(data, subsets)
+
     plt.figure()
-    for n in n_vals:
-        rtt = np.log(n)
-        for pi,pc in enumerate(pc_vals):
-            for label, d in data[pc]['S'].items():
-                if methods and label not in methods:
-                    continue
-                plt.errorbar(mu_vals*rtt, [-np.mean(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
-                            [np.std(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
-                            c=colors[label], ls=line_styles[pi],
-                            label=labels[label] + ', pc=%1.1f'%pc if n==n_vals[0] and  label!='naive' else '')
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        pc, label, n = tmp_p['pc'], tmp_p['method'], tmp_p['n']
+
+        rtt = d['mean'].index*np.log(n)
+        plt.plot(rtt, d['mean']['model_entropy']-d['mean']['true_entropy'],
+                            c=colors[tmp_p['method']], ls=line_styles[subsets['pc'].index(pc)],
+                            label=f"{labels[label]}, pc={pc:1.2f}" if n==subsets['n'][0] and  label!='naive' else '')
 
     plt.xscale('log')
     plt.legend(fontsize=fs)
@@ -146,15 +142,15 @@ def plot_pentropy_vs_rtt(data, n_vals, mu_vals, pc_vals, methods=None, fname=Non
             plt.savefig(fname+fmt)
 
 
-def plot_avg_rate(data, n_vals, mu_vals, methods=None, fname=None):
+def plot_avg_rate(data, subsets, fname=None):
+    mean_vals = make_means(data, subsets)
+
     plt.figure()
-    for n in n_vals:
-        for label, d in data['avg_rate'].items():
-            if methods and label not in methods:
-                continue
-            plt.plot([np.mean(d[(L,n,mu)], axis=0)[0] for mu in mu_vals],
-                     [np.mean(d[(L,n,mu)], axis=0)[1] for mu in mu_vals],
-                      c=colors[label], label=labels[label] if n==n_vals[0] else '')
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        plt.errorbar(d['mean']['true_average_mu'], d['mean']['average_mu'], d['std']['average_mu'],
+                      c=colors[tmp_p['method']],
+                      label=labels[tmp_p['method']] if tmp_p['n']==np.max(subsets['n']) else '')
 
     plt.plot([0, 0.35], [0, 0.35], c='k', label='correct')
     plt.legend(fontsize=fs)
@@ -168,20 +164,15 @@ def plot_avg_rate(data, n_vals, mu_vals, methods=None, fname=None):
             plt.savefig(fname+fmt)
 
 
-def plot_rate_correlation(data, n_vals, mu_vals, pc_vals, methods=None, fname=None):
-    plt.figure()
+def plot_rate_correlation(data, subsets, fname=None):
+    mean_vals = make_means(data, subsets)
     ls={1.5:'-', 3.0:'--'}
-    for rate_alpha in data:
-        for pi,pc in enumerate(pc_vals):
-            dtmp = data[rate_alpha][pc]
-            for n in n_vals:
-                for label, d in dtmp['mucorr'].items():
-                    if methods and label not in methods:
-                        continue
-                    plt.errorbar(np.array(mu_vals)*n,
-                             [np.mean(d[(L,n,mu)], axis=0) for mu in mu_vals],
-                             [np.std(d[(L,n,mu)], axis=0) for mu in mu_vals], ls=ls[rate_alpha],
-                                 c="C%d"%pi,label='pc=%1.2f, alpha=%1.2f'%(pc, rate_alpha) if n==n_vals[0] else '')
+    plt.figure()
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        pc, label, n = tmp_p['pc'], tmp_p['method'], tmp_p['n']
+        plt.errorbar(d['mean'].index, d['mean']['r_mu'],d['std']['r_mu'],
+                     c="C%d"%subsets['pc'].index(pc), label=f'pc={pc:1.2f}' if n==subsets['n'][0] else '')
 
     plt.xscale('log')
     plt.ylim(0,1.1)
@@ -196,16 +187,16 @@ def plot_rate_correlation(data, n_vals, mu_vals, pc_vals, methods=None, fname=No
             plt.savefig(fname+fmt)
 
 
-def plot_site_specific_rate_dist(data, n_vals, mu_vals, methods=None, fname=None):
+def plot_site_specific_rate_dist(data, subsets, fname=None):
+    mean_vals = make_means(data, subsets)
+
     plt.figure()
-    for n in n_vals:
-        rtt = np.log(n)
-        for label, d in data['mu'].items():
-            if methods and label not in methods:
-                continue
-            plt.errorbar(mu_vals*rtt, [np.mean(d[(L,n,mu)])/L for mu in mu_vals],
-                        [np.std(d[(L,n,mu)])/L for mu in mu_vals],
-                         c=colors[label], label=labels[label] if n==n_vals[0] else '')
+    for params, d in mean_vals.items():
+        tmp_p = {k:v for k,v in params}
+        pc, label, n = tmp_p['pc'], tmp_p['method'], tmp_p['n']
+        rtt = d['mean'].index*np.log(tmp_p['n'])
+        plt.errorbar(rtt, d['mean']['chisq_mu'], d['std']['chisq_mu'],
+                     c=colors[label], label=labels[label] if n==subsets['n'][0] else '')
 
     plt.yscale('log')
     plt.legend(fontsize=fs)
@@ -228,59 +219,40 @@ if __name__ == '__main__':
     parser.add_argument("--rate-alpha", type=float, default=1.5, help="rate variation set to use")
     args=parser.parse_args()
 
-    from matplotlib import pyplot as plt
-    data = {}
-
-    n_vals_to_plot = args.nvals
-    L=1000
-    for rate_alpha in [1.5, 3.0]:
-        data[rate_alpha]={}
-        for pc in [0.01, 0.1, 0.5, 1.0]:
-            tmp, n_vals, mu_vals = load_toy_data_results(args.prefix.replace('XXX', str(rate_alpha)) + '_results_pc_%1.2f/'%pc)
-            data[rate_alpha][pc]=tmp
-
     aa = 'aa' if '_aa' in args.prefix else 'nuc'
     pc_general = args.pc
     rate_alpha = args.rate_alpha
     suffix = '_%s_ratealpha%1.1f'%(aa, rate_alpha)
+
+
+    data = load_toy_data_results(args.prefix.replace('XXX', str(rate_alpha)))
+    n_vals_to_plot = args.nvals
+    n_vals = np.unique(data['n'])
+
     #### Fig1: equilibrium frequency accuracy for all n and mu's
-    plot_pdist_vs_tree_length(data[rate_alpha][pc_general], n_vals, mu_vals, methods=['naive', 'dressed'],
-                        fname='figures/p_dist_vs_treelength'+suffix)
+    plot_pdist_vs_tree_length(data, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals},
+                                fname='figures/p_dist_vs_treelength'+suffix)
 
     #### Fig 2: average rate vs true rate. shows the effect of first order
     #approximation when working off counts. uninformative for other models since
     #mu is set to one -- here we need to compare branch length
-    plot_avg_rate(data[rate_alpha][pc_general], n_vals_to_plot, mu_vals, methods=['dressed'],
+    plot_avg_rate(data, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals_to_plot},
                         fname='figures/avg_rate_dressed'+suffix)
 
-    plot_rate_correlation(data, n_vals_to_plot, mu_vals, [0.01, 0.1, 0.5, 1.0], methods=['dressed'],
+    plot_rate_correlation(data,  subsets = {'pc':[0.01, 0.1, 0.5, 1.0], 'method':['naive', 'dressed'], 'n':n_vals_to_plot},
                         fname='figures/rate_correlation_dressed'+suffix)
 
     #### comparison of different inference schemes as a function of tree length for one pc
-    plot_pdist_vs_rtt(data[rate_alpha][pc_general], n_vals_to_plot, mu_vals,
-                      methods=['naive', 'regular', 'marginal',
-                               'iterative','iterative_true', 'optimize_tree','dressed'],
+    plot_pdist_vs_rtt(data, subsets={'pc':[pc_general], 'n':n_vals_to_plot,
+                                    'method':['naive', 'ml_reconstruction', 'marginalize',
+                                              'iterative','iterative_true', 'optimize_tree','dressed']},
                       fname='figures/p_dist_vs_rtt'+suffix)
 
-    plot_site_specific_rate_dist(data[rate_alpha][pc_general], n_vals_to_plot, mu_vals,
-                      methods=['naive', 'dressed', 'regular', 'marginal',
-                                'iterative_true', 'optimize_tree'],
+    plot_site_specific_rate_dist(data, subsets={'pc':[pc_general], 'n':n_vals_to_plot,
+                                  'method':['naive', 'dressed', 'ml_reconstruction', 'marginalize',
+                                            'iterative_true', 'optimize_tree']},
                       fname='figures/mu_dist_vs_rtt'+suffix)
 
-    plot_pentropy_vs_rtt(data[rate_alpha], n_vals_to_plot, mu_vals, pc_vals=[0.01, 0.1, 0.5, 1.0],
-                         methods=['naive', 'dressed'],
+    plot_pentropy_vs_rtt(data,  subsets = {'pc':[0.01, 0.1, 0.5, 1.0], 'method':['naive', 'dressed'], 'n':n_vals_to_plot},
                          fname='figures/p_entropy_vs_rtt'+suffix)
 
-    # for each data set size, plot the distance of the inferred equilibrium frequencies
-    # and the substitution rates from the true frequencies and rates
-    for n in []:
-
-        plt.figure()
-        for label, d in data["LH"].items():
-            plt.errorbar(mu_vals*rtt, [-np.mean(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals],
-                        [np.std(np.diff(d[(L,n,mu)], axis=1)) for mu in mu_vals], label=label)
-
-        #plt.yscale('log')
-        plt.legend()
-        plt.xlabel('average root-to-tip distance')
-        plt.ylabel('delta LH')

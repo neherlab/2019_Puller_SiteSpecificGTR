@@ -1,3 +1,8 @@
+"""
+By default, the reconstructed trees are rooted at midpoint. 
+This script was only used in the early days when this was
+not yet done.
+"""
 import glob
 from Bio import Phylo
 from generate_toy_data import *

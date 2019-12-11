@@ -13,8 +13,8 @@ parser.add_argument("--submit", action='store_true', help="submit")
 parser.add_argument("--date", type=str,  help="date prefix")
 parser.add_argument("--rate-alpha", type=float, default=1.5, help="parameter of the rate distribution")
 args=parser.parse_args()
-dsets = [(1.0, False, False)] #, (0.0, True, False)]
-#dsets = [(0.2, False, True), (0.5, False, True)]
+#dsets = [(1.0, False, False)] #, (0.0, True, False)]
+dsets = [(0.2, False, True), (0.5, False, True)]
 
 date_prefix = args.date or date.today().strftime('%Y-%m-%d')
 
