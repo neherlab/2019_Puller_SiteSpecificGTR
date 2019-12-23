@@ -117,7 +117,7 @@ def analyze(ana, tree, aln, alphabet, prefix, params, true_model):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
-    parser.add_argument("--output", type=str, help="folder to save data")
+    parser.add_argument("--output", type=str, help="file to save data")
     parser.add_argument("--aa", action='store_true', help="use amino acid alphabet")
     parser.add_argument("--pc", type=float, default=1.0, help="pseudocount for reconstruction")
     parser.add_argument("--files", nargs="+", type=str, help="alignments to analyze")
