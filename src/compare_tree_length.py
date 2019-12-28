@@ -6,65 +6,65 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "", usage="graph inferred tree lengths")
     parser.add_argument("--treelengths", type=str, help="simulated mutation rate")
+    parser.add_argument("--nval", type=int, help="data set size")
+    parser.add_argument("--aa", action='store_true', help="inference from amino acid sequences")
     args=parser.parse_args()
 
     df = pd.read_csv(args.treelengths, sep='\t')
 
     # make scatter plots comparing true to inferred tree length
-    n = 100
+    n = args.nval
     n_branch = 2*n-2
 
-    fig = plt.figure(1)
+    fs = 16
+    fig = plt.figure()
     df_slice = df.loc[df['n']==n,:]
     true_val = df_slice['trueTree_treelength']/n_branch
-    plt.scatter(true_val, df_slice['reconstructed_treelength']/n_branch)
-    plt.scatter(true_val, df_slice['inferred_c0.1_treelength']/n_branch)
-    plt.scatter(true_val, df_slice['inferred_c1.0_treelength']/n_branch)
-    plt.scatter(true_val, df_slice['trueRates_c0.1_treelength']/n_branch)
-    plt.scatter(true_val, df_slice['trueModel_treelength']/n_branch)
+    plt.scatter(true_val, df_slice['trueModel_treelength']/n_branch, label='true model')
+    plt.scatter(true_val, df_slice['reconstructed_treelength']/n_branch, label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['inferred_c0.1_treelength']/n_branch, label='c=0.1')
+    plt.scatter(true_val, df_slice['inferred_c1.0_treelength']/n_branch, label='c=1.0')
+    plt.scatter(true_val, df_slice['trueRates_c0.1_treelength']/n_branch, label='c=0.1 (true rates)')
+#    plt.scatter(true_val, df_slice['trueRates_c1.0_treelength']/n_branch, label='c=1.0 (true rates)')
     plt.plot([0,.3], [0,.3])
+    plt.ylabel('Inferred avg branch length', fontsize=fs)
+    plt.xlabel('True avg branch length', fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.legend(fontsize=0.8*fs)
+    plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_length_n{args.nval}.pdf")
 
-    fig = plt.figure(2)
+
+    fig = plt.figure()
     df_slice = df.loc[df['n']==n,:]
     true_val = df_slice['trueTree_depth']
-    plt.scatter(true_val, df_slice['reconstructed_depth'])
-    plt.scatter(true_val, df_slice['inferred_c0.1_depth'])
-    plt.scatter(true_val, df_slice['inferred_c1.0_depth'])
-    plt.scatter(true_val, df_slice['trueRates_c0.1_depth'])
-    plt.scatter(true_val, df_slice['trueModel_depth'])
+    plt.scatter(true_val, df_slice['trueModel_depth'], label='true model')
+    plt.scatter(true_val, df_slice['reconstructed_depth'], label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['inferred_c0.1_depth'], label='c=0.1')
+    plt.scatter(true_val, df_slice['inferred_c1.0_depth'], label='c=1.0')
+    plt.scatter(true_val, df_slice['trueRates_c0.1_depth'], label='c=0.1 (true rates)')
+#    plt.scatter(true_val, df_slice['trueRates_c1.0_depth'], label='c=1.0 (true rates)')
+    plt.ylabel('Inferred avg root-to-tip', fontsize=fs)
+    plt.xlabel('True avg root-to-tip distance', fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
+    plt.plot([0,3], [0,3])
+    plt.legend(fontsize=0.8*fs)
+    plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_depth_n{args.nval}.pdf")
+
+
+    fig = plt.figure()
+    df_slice = df.loc[df['n']==n,:]
+    true_val = df_slice['trueTree_terminals']
+    plt.scatter(true_val, df_slice['trueModel_terminals'], label='true model')
+    plt.scatter(true_val, df_slice['reconstructed_terminals'], label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['inferred_c0.1_terminals'], label='c=0.1')
+    plt.scatter(true_val, df_slice['inferred_c1.0_terminals'], label='c=1.0')
+#    plt.scatter(true_val, df_slice['trueRates_c0.1_terminals'], label='c=0.1 (true rates)')
+    plt.ylabel('Inferred avg terminal length', fontsize=fs)
+    plt.xlabel('True avg terminal length', fontsize=fs)
+    plt.tick_params(labelsize=0.8*fs)
     plt.plot([0,.3], [0,.3])
-
-
-    # for dset in length:
-    #     length_a = np.array(length[dset])
-    #     depth_a = np.array(depth[dset])
-    #     terminal_a = np.array(terminal_bl[dset])
-    #     if dset=='ML':
-    #         label =  'FastTree JTT+CAT20' if aa else 'IQ-tree GTR+R10'
-    #     elif dset=='true':
-    #         label='True model'
-    #     else:
-    #         label=f"Inferred model {'(true rates)' if dset[1]=='true-rates' else ''}, pc={dset[0]:1.1f}"
-    #     plt.figure(1)
-    #     plt.scatter(length_a[:,0], length_a[:,1], label=label)
-    #     plt.figure(2)
-    #     plt.scatter(depth_a[:,0], depth_a[:,1], label=label)
-    #     plt.figure(3)
-    #     plt.scatter(terminal_a[:,0], terminal_a[:,1], label=label)
-
-    # plt.figure(1)
-    # plt.plot([0,0.25], [0,0.25])
-    # plt.ylabel('inferred average branch length')
-    # plt.xlabel('true average branch length')
-    # plt.legend()
-    # plt.savefig("figures/"+prefix+"_length.pdf")
-
-    # plt.figure(2)
-    # plt.plot([0,3.5], [0,3.5])
-    # plt.ylabel('inferred average root-to-tip distance')
-    # plt.xlabel('true average root-to-tip distance')
-    # plt.legend()
-    # plt.savefig("figures/"+prefix+"_depth.pdf")
+    plt.legend(fontsize=0.8*fs)
+    plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_terminal_n{args.nval}.pdf")
 
     # plt.figure(3)
     # plt.plot([0,0.25], [0,0.25])

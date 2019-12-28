@@ -1,3 +1,8 @@
+'''
+script that reads in data obtained from mixing Jukes-Cantor type models with the true
+model to explore how sensitive reconstruction of branch length is to model
+mis-specification.
+'''
 import glob
 from matplotlib import pyplot as plt
 from Bio import Phylo, AlignIO
@@ -29,7 +34,7 @@ def make_means(data, conditions):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "", usage="analyze simulated data for site specific GTR reconstruction project")
-    parser.add_argument("--files", nargs="+", type=str, help="alignments to analyze")
+    parser.add_argument("--files", nargs="+", type=str, help="tables to ")
     parser.add_argument("--plot-mu", type=float, default=0.2, help="mutation rate used for the plot vs epsilong")
     parser.add_argument("--output", type=str, help="file to save figure to")
     args=parser.parse_args()
@@ -37,7 +42,7 @@ if __name__ == '__main__':
     df = load_data(args.files)
     eps_vals = list(np.linspace(0.0,1,11))
     mu_vals = list(np.unique(df['m']))
-    
+
     one_mu = make_subset(df, {"m":args.plot_mu})
     eps_graph = {x:[list() for e in eps_vals] for x in ['pi', 'mu', 'all']}
     mu_graph = {x:[list() for mu in mu_vals] for x in ['pi', 'mu', 'all']}
@@ -52,9 +57,9 @@ if __name__ == '__main__':
         for x in ['pi', 'mu', 'all']:
             mu_graph[x][mi].append(row[f'eps_{x}_1.00']/row['true_value'])
 
-                
+
     # make figure
-    fig, axs = plt.subplots(1,2, sharey=True, figsize=(13,7))
+    fig, axs = plt.subplots(1,2, sharey=True, figsize=(11,5))
 
     fs=16
     for k, label_str in [('pi', 'frequencies'), ('mu', 'rates'), ('all', 'both')]:
@@ -62,7 +67,7 @@ if __name__ == '__main__':
         std = np.std(eps_graph[k],axis=1)
         axs[0].errorbar(eps_vals, m, std, label=label_str, lw=3)
 
-    axs[0].set_xlabel('mixing ratio true/flat', fontsize=fs)
+    axs[0].set_xlabel(r'mixing ratio $\alpha$ true/flat', fontsize=fs)
     axs[0].set_ylabel('rel. total branch length error', fontsize=fs)
     axs[0].tick_params(labelsize=fs*0.8)
 
@@ -73,5 +78,5 @@ if __name__ == '__main__':
     axs[1].set_xlabel('evolutionary rate', fontsize=fs)
     axs[1].legend(fontsize=fs)
     axs[1].tick_params(labelsize=fs*0.8)
-
+    plt.tight_layout()
     plt.savefig(args.output)

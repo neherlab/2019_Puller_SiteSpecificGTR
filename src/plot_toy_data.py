@@ -128,7 +128,7 @@ def plot_pentropy_vs_rtt(data, subsets, fname=None):
         rtt = d['mean'].index*np.log(n)
         plt.plot(rtt, d['mean']['model_entropy']-d['mean']['true_entropy'],
                             c=colors[tmp_p['method']], ls=line_styles[subsets['pc'].index(pc)],
-                            label=f"{labels[label]}, pc={pc:1.2f}" if n==subsets['n'][0] and  label!='naive' else '')
+                            label=f"{labels[label]}, c={pc:1.2f}" if n==subsets['n'][0] and  label!='naive' else '')
 
     plt.xscale('log')
     plt.legend(fontsize=fs)
@@ -166,13 +166,14 @@ def plot_avg_rate(data, subsets, fname=None):
 
 def plot_rate_correlation(data, subsets, fname=None):
     mean_vals = make_means(data, subsets)
-    ls={1.5:'-', 3.0:'--'}
+    ls=['-', '--']
     plt.figure()
     for params, d in mean_vals.items():
         tmp_p = {k:v for k,v in params}
         pc, label, n = tmp_p['pc'], tmp_p['method'], tmp_p['n']
-        plt.errorbar(d['mean'].index, d['mean']['r_mu'],d['std']['r_mu'],
-                     c="C%d"%subsets['pc'].index(pc), label=f'pc={pc:1.2f}' if n==subsets['n'][0] else '')
+        plt.errorbar(d['mean'].index*n, d['mean']['r_mu'],d['std']['r_mu'],
+                     c="C%d"%subsets['pc'].index(pc), label=f'c={pc:1.2f}, n={n}',
+                     ls=ls[subsets['n'].index(n)])
 
     plt.xscale('log')
     plt.ylim(0,1.1)
@@ -180,6 +181,7 @@ def plot_rate_correlation(data, subsets, fname=None):
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('average number of substitution per site', fontsize=fs)
     plt.ylabel('inferred/true rate correlation', fontsize=fs)
+    plt.plot([10,max(subsets['n'])/3], [1,1], lw=2, c='#CCCCCC')
     plt.tight_layout()
 
     if fname:
@@ -239,7 +241,7 @@ if __name__ == '__main__':
     plot_avg_rate(data, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals_to_plot},
                         fname='figures/avg_rate_dressed'+suffix)
 
-    plot_rate_correlation(data,  subsets = {'pc':[0.01, 0.1, 0.5, 1.0], 'method':['naive', 'dressed'], 'n':n_vals_to_plot},
+    plot_rate_correlation(data,  subsets = {'pc':[0.01, 0.1, 0.5, 1.0], 'method':['dressed'], 'n':n_vals_to_plot},
                         fname='figures/rate_correlation_dressed'+suffix)
 
     #### comparison of different inference schemes as a function of tree length for one pc

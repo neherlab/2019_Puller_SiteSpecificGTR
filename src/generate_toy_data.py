@@ -72,7 +72,7 @@ def simplex(params, out_prefix = None, yule=True, n_model = 5, n_seqgen=5,
     n_seqgen : int, optional
         number of times sequences are evolved for each tree/model combination
     JC : bool, optional
-        Use a Jukes Cantor model
+        Use a Jukes Cantor model for the preference but include rate variation
     alphabet : str, optional
         alphabet of the GTR model
     alpha : float, optional
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", type=float, help="simulated mutation rate")
     parser.add_argument("-n", type=int, help="number of taxa")
     parser.add_argument("-L", type=int, default=300, help="length of sequence")
-    parser.add_argument("--JC", action='store_true', help="simulate JC model")
+    parser.add_argument("--JC", action='store_true', help="simulate JC model with rate variation")
     parser.add_argument("--aa", action='store_true', help="use amino acid alphabet")
     parser.add_argument("--alpha", default=1.0, type=float,  help="parameter of the dirichlet distribution for preferences")
     parser.add_argument("--rate-alpha", default=1.5, type=float,  help="parameter of the gamma distribution for rates")

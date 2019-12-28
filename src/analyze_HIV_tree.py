@@ -43,7 +43,7 @@ def calculate_in_out_ratio(gtr, major_allele):
     '''
     major_index = np.zeros_like(major_allele, dtype=int)
     for ni, n in enumerate(gtr.alphabet):
-        major_index[major_allele==n.decode()]=ni
+        major_index[major_allele==n]=ni
     #major_index = np.argmax(gtr.Pi, axis=0)
 
     r_ind = np.arange(gtr.Pi.shape[-1])

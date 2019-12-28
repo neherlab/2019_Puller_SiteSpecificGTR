@@ -19,13 +19,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "", usage="collect statistics of re-optimized trees")
     parser.add_argument("--reoptimizedTrees", type=str, help="directory with reoptimized trees")
     parser.add_argument("--trueTrees", type=str, help="directory with true trees")
+    parser.add_argument("--nval", type=int, help="tree size to glob")
     parser.add_argument("--true-rates", action='store_true', help="include estimates with true rates")
     parser.add_argument("--output", type=str, help="file to save data")
     args=parser.parse_args()
 
     res = defaultdict(dict)
-    reoptimizedTrees = glob.glob(args.reoptimizedTrees+'/*reoptimized.nwk')
-    recTrees = glob.glob(args.trueTrees+'/*reconstructed.nwk')
+    if args.nval:
+        reoptimizedTrees = glob.glob(args.reoptimizedTrees+f'/*n{args.nval}_*reoptimized.nwk')
+        recTrees = glob.glob(args.trueTrees+f'/*n{args.nval}_*reconstructed.nwk')
+    else:
+        reoptimizedTrees = glob.glob(args.reoptimizedTrees+'/*reoptimized.nwk')
+        recTrees = glob.glob(args.trueTrees+'/*reconstructed.nwk')
 
     for treename in reoptimizedTrees:
         dset = parse_alignment_name(treename)

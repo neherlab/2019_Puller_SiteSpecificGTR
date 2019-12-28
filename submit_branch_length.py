@@ -16,8 +16,7 @@ parser.add_argument("--date", type=str,  help="date prefix")
 parser.add_argument("--rate-alpha", type=float, default=1.5, help="parameter of the rate distribution")
 args=parser.parse_args()
 
-dsets = [(1.0, False, False)] #, (0.0, True, False)]
-#dsets = [(0.2, False, True), (0.5, False, True)]
+dsets = [(1.0, False, False), (0.0, True, False), (0.2, False, True), (0.5, False, True)]
 
 date_prefix = args.date or date.today().strftime('%Y-%m-%d')
 
@@ -35,10 +34,11 @@ for pc in [0.01, 0.1, 0.5, 1.0]:
                 if len(files):
                     chunks = make_chunks(files, n=ceil(n/100))
                     for ci,chunk in enumerate(chunks):
-                        cmd = f'sbatch {submit_script} src/calculate_branch_length.py --files {" ".join(chunk)} --output {output} {"--aa" if aa else ""} --pc {pc}'
-                        print(cmd)
-                        if args.submit:
-                            os.system(cmd)
-                            os.system(cmd + ' --true-model')
-                            os.system(cmd + ' --true-rates')
+                        if len(chunk):
+                            cmd = f'sbatch {submit_script} src/calculate_branch_length.py --files {" ".join(chunk)} --output {output} {"--aa" if aa else ""} --pc {pc}'
+                            print(cmd)
+                            if args.submit:
+                                os.system(cmd)
+                                os.system(cmd + ' --true-model')
+                                os.system(cmd + ' --true-rates')
 
