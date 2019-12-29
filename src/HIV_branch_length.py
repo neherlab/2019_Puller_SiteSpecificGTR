@@ -7,6 +7,8 @@ from treetime.seq_utils import seq2prof, profile_maps, alphabets, prof2seq
 from estimation import *
 from generate_toy_data import save_model, load_model
 
+from plot_toy_data import add_panel_label
+
 
 if __name__ == '__main__':
     import argparse
@@ -76,6 +78,7 @@ if __name__ == '__main__':
     axs[0].set_ylabel('inferred branch length', fontsize=fs)
     axs[0].tick_params(labelsize=0.8*fs)
     axs[0].legend(fontsize=0.8*fs)
+    add_panel_label(axs[0],'A',  x_offset=-0.15,y_offset=0.95, fs=fs)
 
     # add a second axis that coresponds roughly to years for HIV
     sec_axx = axs[0].twinx()
@@ -94,6 +97,7 @@ if __name__ == '__main__':
     axs[1].set_ylabel('fraction below rate x', fontsize=fs)
     axs[1].set_xscale('log')
     axs[1].tick_params(labelsize=0.8*fs)
+    add_panel_label(axs[1],'B',  x_offset=-0.15,y_offset=0.95, fs=fs)
     plt.tight_layout()
 
     for fmt in ['.png', '.pdf']:

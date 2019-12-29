@@ -1,6 +1,7 @@
 import glob
 import pandas as pd
 from matplotlib import pyplot as plt
+from plot_toy_data import add_panel_label
 
 if __name__ == '__main__':
     import argparse
@@ -27,10 +28,14 @@ if __name__ == '__main__':
     plt.scatter(true_val, df_slice['trueRates_c0.1_treelength']/n_branch, label='c=0.1 (true rates)')
 #    plt.scatter(true_val, df_slice['trueRates_c1.0_treelength']/n_branch, label='c=1.0 (true rates)')
     plt.plot([0,.3], [0,.3])
+    plt.xlim([0,.3])
+    plt.ylim([0,.3])
     plt.ylabel('Inferred avg branch length', fontsize=fs)
     plt.xlabel('True avg branch length', fontsize=fs)
     plt.tick_params(labelsize=0.8*fs)
+    add_panel_label(plt.gca(),'A',  x_offset=-0.16, fs=fs)
     plt.legend(fontsize=0.8*fs)
+    plt.tight_layout()
     plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_length_n{args.nval}.pdf")
 
 
@@ -46,8 +51,12 @@ if __name__ == '__main__':
     plt.ylabel('Inferred avg root-to-tip', fontsize=fs)
     plt.xlabel('True avg root-to-tip distance', fontsize=fs)
     plt.tick_params(labelsize=0.8*fs)
-    plt.plot([0,3], [0,3])
+    plt.plot([0,3.4], [0,3.4])
+    plt.xlim([0,3.4])
+    plt.ylim([0,3.4])
+    add_panel_label(plt.gca(),'B',  x_offset=-0.12, fs=fs)
     plt.legend(fontsize=0.8*fs)
+    plt.tight_layout()
     plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_depth_n{args.nval}.pdf")
 
 
@@ -63,7 +72,11 @@ if __name__ == '__main__':
     plt.xlabel('True avg terminal length', fontsize=fs)
     plt.tick_params(labelsize=0.8*fs)
     plt.plot([0,.3], [0,.3])
+    plt.xlim([0,.3])
+    plt.ylim([0,.3])
+    add_panel_label(plt.gca(),'C',  x_offset=-0.16, fs=fs)
     plt.legend(fontsize=0.8*fs)
+    plt.tight_layout()
     plt.savefig(f"figures/{'aa' if args.aa else 'nuc'}_terminal_n{args.nval}.pdf")
 
     # plt.figure(3)

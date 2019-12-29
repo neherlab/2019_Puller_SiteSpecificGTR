@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from treetime import TreeAnc
 from treetime.gtr_site_specific import GTR_site_specific
-from plot_toy_data import make_subset
+from plot_toy_data import make_subset, add_panel_label
 
 
 def load_data(files):
@@ -67,16 +67,19 @@ if __name__ == '__main__':
         std = np.std(eps_graph[k],axis=1)
         axs[0].errorbar(eps_vals, m, std, label=label_str, lw=3)
 
-    axs[0].set_xlabel(r'mixing ratio $\alpha$ true/flat', fontsize=fs)
-    axs[0].set_ylabel('rel. total branch length error', fontsize=fs)
+    axs[0].set_xlabel(r'mixing ratio $\alpha$ true/flat, $\langle \mu \rangle=$' +str(args.plot_mu), fontsize=fs)
+    axs[0].set_ylabel('rel. tree length error', fontsize=fs)
     axs[0].tick_params(labelsize=fs*0.8)
+    axs[0].set_ylim([0.4,1.1])
+    add_panel_label(axs[0],'A',  x_offset=+0.02,y_offset=0.9, fs=fs)
 
     for k, label_str in [('pi', 'frequencies'), ('mu', 'rates'), ('all', 'both')]:
         m = np.mean(mu_graph[k],axis=1)
         std = np.std(mu_graph[k],axis=1)
         axs[1].errorbar(mu_vals, m, std, label=label_str, lw=3)
-    axs[1].set_xlabel('evolutionary rate', fontsize=fs)
+    axs[1].set_xlabel(r'evolutionary rate $\langle \mu \rangle$ ($\alpha=1$)', fontsize=fs)
     axs[1].legend(fontsize=fs)
     axs[1].tick_params(labelsize=fs*0.8)
+    add_panel_label(axs[1],'B',  x_offset=+0.02, y_offset=0.9, fs=fs)
     plt.tight_layout()
     plt.savefig(args.output)

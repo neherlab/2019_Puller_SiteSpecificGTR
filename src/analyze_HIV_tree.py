@@ -131,7 +131,7 @@ if __name__ == '__main__':
     plt.legend(fontsize=fs)
     plt.xlim([3e-5, 3e0])
     plt.ylim([3e-2, 3e3])
-    plt.title('amino acids' if args.aa else 'nucleotides',fontsize=fs)
+    plt.title('B: amino acids' if args.aa else 'A: nucleotides',fontsize=fs*1.2)
     plt.xlabel('intra-host fitness cost estimates', fontsize=fs)
     plt.ylabel(r'GTR based fitness estimates $\Gamma_{in}/\Gamma_{out}$', fontsize=fs)
     plt.xscale('log')

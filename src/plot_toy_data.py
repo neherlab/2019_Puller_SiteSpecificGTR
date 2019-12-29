@@ -4,6 +4,12 @@ import pandas as pd
 from collections import defaultdict
 from matplotlib import pyplot as plt
 
+def add_panel_label(ax, label, x_offset=-0.1, y_offset=0.95, fs=12):
+    '''Add a label letter to a panel'''
+    ax.text(x_offset, y_offset, label,
+            transform=ax.transAxes,
+            fontsize=fs*1.5)
+
 fmts = ['.png', '.pdf']
 fs = 12
 
@@ -79,6 +85,7 @@ def plot_pdist_vs_tree_length(data, subsets, fname=None):
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('average number of substitutions per site', fontsize=fs)
     plt.ylabel('squared deviation of $p_i^a$', fontsize=fs)
+    add_panel_label(plt.gca(),'A',  x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
 
     if fname:
@@ -103,10 +110,12 @@ def plot_pdist_vs_rtt(data, subsets, fname=None):
 
     plt.yscale('log')
     plt.xscale('log')
-    plt.legend(fontsize=fs*0.8)
+    plt.legend(fontsize=fs*0.8, loc=3)
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('root-to-tip distance', fontsize=fs)
     plt.ylabel('squared deviation', fontsize=fs)
+    plt.title('amino acids' if 'aa' in fname else 'nucleotides', fontsize=fs*1.3)
+    add_panel_label(plt.gca(), 'B' if 'aa' in fname else 'A', x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
 
     if fname:
@@ -182,6 +191,7 @@ def plot_rate_correlation(data, subsets, fname=None):
     plt.xlabel('average number of substitution per site', fontsize=fs)
     plt.ylabel('inferred/true rate correlation', fontsize=fs)
     plt.plot([10,max(subsets['n'])/3], [1,1], lw=2, c='#CCCCCC')
+    add_panel_label(plt.gca(), 'B', x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
 
     if fname:
