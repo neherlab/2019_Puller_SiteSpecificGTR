@@ -28,7 +28,7 @@ colors = {k:'C%d'%((i+1)%10) for i,k in enumerate(labels.keys())}
 
 
 def load_toy_data_results(path):
-    tsv_files = glob.glob(os.path.join(path, "*tsv"))
+    tsv_files = glob.glob(os.path.join(path, "L*tsv"))
     df = pd.concat([pd.read_csv(fname, sep='\t') for fname in tsv_files])
     return df
 
@@ -56,7 +56,7 @@ def make_means(data, conditions):
     return res
 
 
-def plot_pdist_vs_tree_length(data, subsets, fname=None):
+def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
     # plot the squared distance of the inferred equilibrium frequencies
     # from the true frequencies as a function of total tree length. we expect this to be 1/n
     # We assume a Yule tree here, that is the total tree length can be calculated as:
@@ -76,6 +76,15 @@ def plot_pdist_vs_tree_length(data, subsets, fname=None):
         if tmp_p['method']=='naive':
             plt.text(subs_per_site[0], d['mean']['chisq_p'].iloc[0]*1.2,
                     f"n={tmp_p['n']}", fontsize=fs*0.8)
+
+    if not (data_secondary is None):
+        mean_vals_secondary = make_means(data_secondary, subsets)
+        for params, d in mean_vals_secondary.items():
+            tmp_p = {k:v for k,v in params}
+            subs_per_site = d['mean'].index*tmp_p['n']
+            plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
+                         label='', c="#AAAAAA", ls=ls[tmp_p['n']])
+
 
     plt.plot([10,1000], [0.1,0.001], label=r'$\sim x^{-1}$', c='k')
     plt.ylim([0.001, 1.6])
@@ -228,21 +237,23 @@ if __name__ == '__main__':
     parser.add_argument("--prefix", type=str, help="prefix of data set")
     parser.add_argument("--nvals", nargs='+', type=int, default=[1000], help="n values to plot")
     parser.add_argument("--pc", type=float, default=0.1, help="pc value to use in plots")
-    parser.add_argument("--rate-alpha", type=float, default=1.5, help="rate variation set to use")
     args=parser.parse_args()
 
     aa = 'aa' if '_aa' in args.prefix else 'nuc'
     pc_general = args.pc
-    rate_alpha = args.rate_alpha
+    rate_alpha = 1.5
     suffix = '_%s_ratealpha%1.1f'%(aa, rate_alpha)
 
-
+    if aa=='nuc':
+        data_3 = load_toy_data_results(args.prefix.replace('XXX', '3.0'))
+    else:
+        data_3 = None
     data = load_toy_data_results(args.prefix.replace('XXX', str(rate_alpha)))
     n_vals_to_plot = args.nvals
     n_vals = np.unique(data['n'])
 
     #### Fig1: equilibrium frequency accuracy for all n and mu's
-    plot_pdist_vs_tree_length(data, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals},
+    plot_pdist_vs_tree_length(data, data_3, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals},
                                 fname='figures/p_dist_vs_treelength'+suffix)
 
     #### Fig 2: average rate vs true rate. shows the effect of first order

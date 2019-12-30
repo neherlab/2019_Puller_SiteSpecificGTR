@@ -22,7 +22,7 @@ if __name__ == '__main__':
     df_slice = df.loc[df['n']==n,:]
     true_val = df_slice['trueTree_treelength']/n_branch
     plt.scatter(true_val, df_slice['trueModel_treelength']/n_branch, label='true model')
-    plt.scatter(true_val, df_slice['reconstructed_treelength']/n_branch, label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['reconstructed_treelength']/n_branch, label="FastTree" if args.aa else "IQ-tree GTR+R10")
     plt.scatter(true_val, df_slice['inferred_c0.1_treelength']/n_branch, label='c=0.1')
     plt.scatter(true_val, df_slice['inferred_c1.0_treelength']/n_branch, label='c=1.0')
     plt.scatter(true_val, df_slice['trueRates_c0.1_treelength']/n_branch, label='c=0.1 (true rates)')
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     df_slice = df.loc[df['n']==n,:]
     true_val = df_slice['trueTree_depth']
     plt.scatter(true_val, df_slice['trueModel_depth'], label='true model')
-    plt.scatter(true_val, df_slice['reconstructed_depth'], label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['reconstructed_depth'], label="FastTree" if args.aa else "IQ-tree GTR+R10")
     plt.scatter(true_val, df_slice['inferred_c0.1_depth'], label='c=0.1')
     plt.scatter(true_val, df_slice['inferred_c1.0_depth'], label='c=1.0')
     plt.scatter(true_val, df_slice['trueRates_c0.1_depth'], label='c=0.1 (true rates)')
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     df_slice = df.loc[df['n']==n,:]
     true_val = df_slice['trueTree_terminals']
     plt.scatter(true_val, df_slice['trueModel_terminals'], label='true model')
-    plt.scatter(true_val, df_slice['reconstructed_terminals'], label="FastTree" if args.aa else "IQ-tree GTR+10")
+    plt.scatter(true_val, df_slice['reconstructed_terminals'], label="FastTree" if args.aa else "IQ-tree GTR+R10")
     plt.scatter(true_val, df_slice['inferred_c0.1_terminals'], label='c=0.1')
     plt.scatter(true_val, df_slice['inferred_c1.0_terminals'], label='c=1.0')
 #    plt.scatter(true_val, df_slice['trueRates_c0.1_terminals'], label='c=0.1 (true rates)')

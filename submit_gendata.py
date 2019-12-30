@@ -17,7 +17,7 @@ today = args.date or date.today().strftime('%Y-%m-%d')
 datasets = [(1.0, 1.5, False, False),
             (0.0, 1.5, True, False),
             (0.2, 1.5, False, True),
-            (0.5, 1.5, False, True)]
+            (0.5, 1.5, False, True),(1.0, 3.0, False, False)]
 
 for alpha, rate_alpha, JC, aa in datasets:
     prefix = f'{today}_simulatedData_L{L}_ratealpha{rate_alpha:1.1f}_freqalpha{alpha:1.1f}_{"aa" if aa else "nuc"}' + ("_JC" if JC else "")

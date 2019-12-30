@@ -1,7 +1,7 @@
 # Inference of site specific GTR models
 
 The majority of the steps described below make use of the HPC infrastructure at sciCore of the University of Basel.
-Jobs were submitted to a slurm based compute cluster and the corresponding scripts are given here for reference purposes only.
+Jobs were submitted to a slurm based compute cluster and the corresponding scripts are given here for reference purposes only (see below).
 
 ## Simulated data generation
 
@@ -22,4 +22,69 @@ The results are saved in a pickle file for further analysis.
 ## Reconstructing branch lengths
 To compare the ability to correctly infer branch lengths using inferred models, we jointly infer models and branch length.
 This step is performed in the script `src/calculate_branch_length.py`.
+
+
+##Specific commands run
+
+The following scripts submit the jobs on the sciCore compute cluster used to generate and analyse the toy data.
+
+### Generate data
+
+python submit_gendata.py --nvals 100 --submit
+python submit_gendata.py --nvals 300 --submit
+python submit_gendata.py --nvals 1000 --submit
+python submit_gendata.py --nvals 3000 --submit
+
+### reconstruct models from simulated data
+python submit_reconstruction.py --date 2019-12-25 --nvals 100 --submit
+python submit_reconstruction.py --date 2019-12-25 --nvals 300 --submit
+python submit_reconstruction.py --date 2019-12-25 --nvals 1000 --submit
+python submit_reconstruction.py --date 2019-12-25 --nvals 3000 --submit
+
+
+### calculate branch length deviations
+python submit_branch_length.py --nvals 100 --date 2019-12-25 --submit
+python submit_branch_length.py --nvals 300 --date 2019-12-25 --submit
+python submit_branch_length.py --nvals 1000 --date 2019-12-25 --submit
+python submit_branch_length.py --nvals 3000 --date 2019-12-25 --submit
+
+### collect branch length into tablular files files
+python submit_collect_tree_lengths.py --nval 100 --submit --date 2019-12-25
+python submit_collect_tree_lengths.py --nval 300 --submit --date 2019-12-25
+python submit_collect_tree_lengths.py --nval 1000 --submit --date 2019-12-25
+
+### submit model deviation analysis
+
+### Plot figures 1 & 2 -- model inference accuracy
+run src/plot_toy_data.py --prefix 2019-12-25_simulatedData_L1000_ratealphaXXX_freqalpha1.0_nuc_results  --nvals 1000
+
+#### corresponding supplementary figures
+run src/plot_toy_data.py --prefix 2019-12-25_simulatedData_L1000_ratealphaXXX_freqalpha0.2_aa_results  --nvals 1000
+
+# Plot figure 3 -- tree length
+run src/compare_tree_length.py --nval 300 --treelengths 2019-12-25_simulatedData_L1000_ratealpha1.5_freqalpha1.0_nuc_results/collected_tree_lengths_n300.tsv
+
+#### corresponding supplementary figure
+run src/compare_tree_length.py --nval 300 --treelengths 2019-12-25_simulatedData_L1000_ratealpha1.5_freqalpha0.2_aa_results/collected_tree_lengths_n300.tsv --aa
+
+### Plot figure 4 -- model deviation
+
+run src/model_deviation.py --files 2019-12-25_simulatedData_L1000_ratealpha1.5_freqalpha1.0_nuc_results/ModelDeviation_L1000_n300_m0.* --output figures/model_deviation_n300.pdf
+
+
+### Plot figure 5 -- HIV fitness landscape
+
+run src/analyze_HIV_tree.py --prefix HIV_data/results/HIV_B_pol --pc 0.001 --gene pol --redo
+
+run src/analyze_HIV_tree.py --prefix HIV_data/results/HIV_B_pol --pc 0.001 --gene pol --redo --aa
+
+#### corresponding supplementary figures
+run src/analyze_HIV_tree.py --prefix HIV_data/results/HIV_B_nef --pc 0.001 --gene pol --redo
+run src/analyze_HIV_tree.py --prefix HIV_data/results/HIV_B_gag --pc 0.001 --gene pol --redo
+
+### Plot figure 6 -- Branch length dependence due to ignoring site specificity of HIV
+
+run src/HIV_branch_length.py --prefix HIV_data/results/HIV_B_pol --pc 0.01
+#### corresponding supplementary figures
+run src/HIV_branch_length.py --prefix HIV_data/results/HIV_B_pol --pc 0.01 --aa
 
