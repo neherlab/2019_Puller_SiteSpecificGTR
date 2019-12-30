@@ -24,7 +24,7 @@ To compare the ability to correctly infer branch lengths using inferred models, 
 This step is performed in the script `src/calculate_branch_length.py`.
 
 
-##Specific commands run
+## Specific commands
 
 The following scripts submit the jobs on the sciCore compute cluster used to generate and analyse the toy data.
 
