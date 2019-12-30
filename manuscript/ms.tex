@@ -41,6 +41,17 @@ $^{3}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland}
 
 \date{\today}
 
+\begin{abstract}
+Natural selection imposes a complex filter on which variants persist in a population resulting in evolutionary patterns that vary greatly along the genome.
+Some sites evolve close to neutral, while others are highly conserved, allow only specific states, or only change in concert with other sites.
+Most commonly used evolutionary models, however, ignore much of this complexity and at best account for variation in the rate at which different sites change.
+Here, we present an efficient algorithm to estimate more complex models that allow for site-specific preferences and explore the accuracy at which such models can be estimated from simulated data.
+We find that the interative approximate maximum likelihood schemes uses information in the data efficiently and results in accurate  estimates of site specific preferences from large data sets with moderately diverged sequences.
+We find that ignoring site specific preferences during branch length estimation of phylogenetic trees -- an assumption of all popular phylogeny software -- results in substantial underestimation comparable to the error incurred when ignoring rate variation.
+However, the joint estimation of branch lengths, site-specific rates, and site-specific preferences can suffer from identifiability problems is typically unable to recover the correct branch lengths.
+Site-specific preferences estimated from large HIV \emph{pol} alignments show good concordance with intra-host estimates and highlight the inability of estimating deep divergence times of HIV and SIVs using molecular clock approaches due to saturation.
+\end{abstract}
+
 \maketitle
 
 \section*{Introduction}
@@ -78,9 +89,9 @@ Here, we implement an EM-style algorithm inspired by \citep{bruno1996modeling} t
 	\includegraphics[width=0.48\textwidth]{{../figures/p_dist_vs_treelength_nuc_ratealpha1.5}.pdf}
 	%\includegraphics[width=0.32\textwidth]{../figures/avg_rate_dressed.pdf}
 	\includegraphics[width=0.48\textwidth]{{../figures/rate_correlation_dressed_nuc_ratealpha1.5}.pdf}
-	\caption{{\bf Accuracy of iterative estimation of site-specific GTR models as a function of the expected number of state changes along the tree.} (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the Poisson statistics of observable mutations.
+	\caption{{\bf Accuracy of iterative estimation of site-specific GTR models as a function of the expected number of state changes along the tree.} (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the Poisson statistics of observable mutations. Colored lines correspond to data generated assuming Gamma distributed rate variation with $\alpha=1.5$, grey lines with $\alpha=3$.
 	The estimates are more accurate than naive estimates from the state frequencies in alignment columns. The advantage over naive estimates increases with data set size as seem from different curves with $n\in [100,300,1000,3000]$ sequences per tree.
-	(B) The relative substitution rates are accurately inferred as soon as the typical site experiences several substitutions across the tree as quantified here as Pearson correlation coefficient between true and inferred rates. Regularization via pseudo-counts reduces over-fitting at low divergence. Data in this figure uses was generated assuming Gamma distributed rate variation with $\alpha=1.5$. }
+	(B) The relative substitution rates are accurately inferred as soon as the typical site experiences several substitutions across the tree as quantified here as Pearson correlation coefficient between true and inferred rates. Regularization via pseudo-counts reduces over-fitting at low divergence. }
 	\label{fig:dressed}
 \end{figure*}
 
@@ -142,9 +153,8 @@ We quantify the accuracy of the inference as $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eq
 Fig.~\ref{fig:dressed} shows the average squared error $\chi^2$ for a trees with $n\in [100,300,1000,3000]$ taxa and a range of substitution rates as a function of the expected number of substitutions per site for estimates of $\eqp_i^a$ from the alignment and using the iterative scheme with correct $n_{ij}^a$ and $\tau_i^a$ as input.
 The plot is shown on double logarithmic scales, such that the approximately straight decrease of $\chi^2$ with slope 1 implies that the accuracy is inversely proportional to the expected number of substitutions.
 This scaling suggests that accuracy is limited by the inherent stochasticity of the evolutionary process and that the inference uses all available information efficiently.
-Deviations of the scaling $\chi_2\sim 1/\textrm{tree length}$ are due to rate variation.
-The data shown in Fig.~\ref{fig:reconstructed}, assumes that rates are Gamma distributed with $\alpha=1.5$ and variation in inference accuracy due to rate variation increases the average error.
-Increasing $\alpha$ to 3 improves this scaling.
+The data shown in Fig.~\ref{fig:reconstructed} was generated by drawing site-specific rates from a Gamma distributed with $\alpha=1.5$ (colored lines) and $\alpha=3$ (grey lines).
+The scaling behavior $\chi_2\sim 1/\textrm{tree length}$ is much more evident for $\alpha=3$ than for $\alpha=1.5$ as the average accuracy is sensitive to a small number of sites with low rates at which frequencies are estimated poorly.
 A naive approach using the frequencies of different sequences states in the alignment as estimates for $\eqp_i^b$ is much less accurate due to the correlation induced by shared ancestry (orange lines in Fig.~\ref{fig:reconstructed}A).
 
 At the largest substitution rates, branch lengths are on the order of 0.5 and the linear approximation underlying the iterative equations is not longer accurate.
@@ -176,10 +186,10 @@ In other words, this underestimation is the result of incorrect models of satura
 
 \begin{figure*}[tb]
 	\centering
-	\includegraphics[width=0.48\textwidth]{{../figures/nuc_length_n300}.pdf}
-	\includegraphics[width=0.48\textwidth]{{../figures/nuc_depth_n300}.pdf}
+	\includegraphics[width=0.48\textwidth]{{../figures/nuc_length_n1000}.pdf}
+	\includegraphics[width=0.48\textwidth]{{../figures/nuc_depth_n1000}.pdf}
 	\caption{{\bf Skewed equilibrium concentration results in branch length under estimates}.
-	Panel A shows the inferred average branch length as estimated by IQ-Tree and TreeTime as a function of the true average branch length. Panel B shows the results of the same optimization for the average root-to-tip distance, which is dominated by deep long branches which are more strongly affected by underestimation. Not that inferred site specific models only partially ameliorate underestimation, see main text. }
+	Panel A shows the inferred average branch length as estimated by IQ-Tree and TreeTime as a function of the true average branch length. Panel B shows the results of the same optimization for the average root-to-tip distance, which is dominated by deep long branches which are more strongly affected by underestimation. Not that inferred site specific models only partially ameliorate underestimation, see main text. Parameters: $n=1000$, $\alpha=1.5$. }
 	\label{fig:tree_length}
 \end{figure*}
 
@@ -193,15 +203,15 @@ This effect is entirely due to skewed equilibrium frequencies, as branch length 
 %% dependence on nucleotide and amino acid skew
 The underestimation of branch lengths is less of a problem when using larger alphabets and the true probability are not too heavily skewed, see Fig.~\ref{fig:tree_length_supp}.
 
-\begin{figure}[tb]
+\begin{figure*}[tb]
 	\centering
-	\includegraphics[width=0.48\textwidth]{{../figures/model_deviation_n300}.pdf}
+	\includegraphics[width=0.7\textwidth]{{../figures/model_deviation_n300}.pdf}
 	\caption{{\bf Sensitivity of branch length estimates on model misspecification}.
 	Panels A \& B show the relative error in total tree length when using a mixture model as defined in Eq.~\ref{eq:mixture_model} for branch length inference. Panel A shows this error as a function of the mixing fraction $\alpha$ for $\langle \mu \rangle = 0.2$. Panel B shows the error as a function of the evolutionary rate $\langle \mu \rangle$ for $\alpha=1$.
 	The mixing is applied to the equilibrium frequencies $\eqp_i^a$, the rates $\mu^a$, or both.
 	}
 	\label{fig:model_deviation}
-\end{figure}
+\end{figure*}
 
 Surprisingly, the inferred site specific model only partially rectifies the problem of branch length under-estimation, despite the fact that these models are close to the true model in terms of low $\chi^2$.
 The principle contributor to this deviation are inaccuracies in the rate estimates.
@@ -254,9 +264,10 @@ The logarithm of this ratio is expected to be proportional to the fitness differ
 We compared this proxy of fitness differences to fitness costs measured using mutation selection balance models and with-in host diversity data of HIV \citep{zanini2017vivo}.
 However, instead of a linear relation ship between $s_i^a$ and within host estimates of fitness costs, we observed a linear relationship between the logarithm of fitness effects measured with-in host and $s_i^a$ (
 see Fig.~\ref{fig:HIV_fitness})
+Interestingly, this correlation between the intra-host estimates and cross-sectional estimates decreased as soon as regularization increased above 0.05 and we there for used a weak regularization of $\pc=0.01$.
 This relationship explains about half the variance of nucleotide effects and about one third of amino acid effects.
 
-The fact that this relationship deviates from the expectation
+The fact that the relationship deviates from the expectation
 \begin{equation}
 	\nonumber
 	\textrm{cross-sectional} \sim \textrm{with-in host}
@@ -306,7 +317,7 @@ Furthermore, this analysis suggests very little signal to estimate the length of
 Sequence evolution models attempt to capture some biological realism while being computationally tractable and easy to parameterize.
 A common compromise is to model rate heterogeneity as random effects, while assuming identical site preferences across the sequence.
 Different positions in a DNA sequence or protein, however, differ markedly in the preferences for different states -- this site specific preference is the basis of all common homology search tools.
-While the need to account for this variation has been known for decades \citep{bruno1996modeling,halpern1998evolutionary}, it is typically not modeled due to over-fitting concerns and due to computational complexity.
+While the need to account for this variation has been known for decades \citep{bruno1996modeling,halpern_evolutionary_1998}, it is typically not modeled due to over-fitting concerns and due to computational complexity.
 However, amino acid preferences can now be measured with high-throughput \citep{fowler_deep_2014} and data set sizes are increasing rapidly such that more complex models can be estimated.
 Large data sets, however, require efficient and scalable methods.
 
@@ -318,7 +329,7 @@ We have implemented the algorithm for site-specific model inference and branch l
 
 
 We further explored how model choice affects the maximum likelihood estimates of branch lengths.
-As has been reported before, branch lengths are underestimated when variation in rate or preferences are not fully accounted for \citep{halpern1998evolutionary,hilton_modeling_2018}.
+As has been reported before, branch lengths are underestimated when variation in rate or preferences are not fully accounted for \citep{halpern_evolutionary_1998,hilton_modeling_2018}.
 While such underestimation often has a moderate effect on the total length of a tree, it can result in substantial underestimation of root-to-tip distance that are dominated by a few long branches close to the root.
 While using the correct model results in correct branch length estimates, joint inference of site-specific models and branch lengths is typically unable to recover the true branch lengths and substantial underestimation remains.
 This points to parameter identifiability problems rooted in similar effects of skewed equilibrium frequencies, low rates, and shorter branch length have on the likelihood of the data.
@@ -389,7 +400,7 @@ Such a site-specific general time-reversible (GTR)) model, can be parameterized 
 \begin{eqnarray}
 Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
 Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki}
-\label{eq:Qij}
+\label{eq:Qij_supp}
 \end{eqnarray}
 where $W_{ij}$ is a symmetric matrix with $W_{ii}=0$ and the second equation ensures conservation of probability.
 In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to ensure that the average rate per site is $\mu^{a}$.
