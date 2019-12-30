@@ -61,7 +61,7 @@ run src/plot_toy_data.py --prefix 2019-12-25_simulatedData_L1000_ratealphaXXX_fr
 #### corresponding supplementary figures
 run src/plot_toy_data.py --prefix 2019-12-25_simulatedData_L1000_ratealphaXXX_freqalpha0.2_aa_results  --nvals 1000
 
-# Plot figure 3 -- tree length
+### Plot figure 3 -- tree length
 run src/compare_tree_length.py --nval 300 --treelengths 2019-12-25_simulatedData_L1000_ratealpha1.5_freqalpha1.0_nuc_results/collected_tree_lengths_n300.tsv
 
 #### corresponding supplementary figure
