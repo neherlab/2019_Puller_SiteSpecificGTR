@@ -468,11 +468,11 @@ For each combination of tree and model, two sets of sequences were evolved using
 In total, this amounts to 80 alignments for each of the data set sizes $n=100,300,1000,3000$ and four different ensembles.
 For each alignment, we reconstructed phylogenetic trees using IQ-tree \citep{nguyen_iq-tree:_2015} with a GTR+R10 model or FastTree \citep{FastTree} using the default 20 category model for nucleotide and amino-acid sequences, respectively.
 These trees were used to infer site specific models from data, see below.
-The exact workflow is documented in the script \texttt{src/generate\_toy\_data.py} in the associated git repository at \href{https://github.org/neherlab/SiteSpecificGTR}{github.org/neherlab/SiteSpecificGTR}.
+The exact workflow is documented in the script \texttt{src/generate\_toy\_data.py} in the associated git repository at \href{https://github.com/neherlab/2019_Puller_SiteSpecificGTR}{github.org/neherlab/2019\_Puller\_SiteSpecificGTR}.
 
 \subsection*{Model inference from simulated data}
 Simulated data and trees (reconstructed or true) were read in by TreeTime and models reconstructed using functions of TreeTime to infer models with the different approximations discussed in the text.
-The exact workflow is documented in the script \texttt{src/reconstruct\_toy\_data.py} in the associated git repository at \href{https://github.org/neherlab/SiteSpecificGTR}{github.org/neherlab/SiteSpecificGTR}.
+The exact workflow is documented in the script \texttt{src/reconstruct\_toy\_data.py} in the associated git repository at \href{https://github.com/neherlab/2019_Puller_SiteSpecificGTR}{github.org/neherlab/2019\_Puller\_SiteSpecificGTR}.
 
 \subsection*{HIV sequence analysis}
 HIV-1 sequences were downloaded from LANL HIV database \citep{LANL} setting filters to ``one sequence per patient'', ``non-ACGT\textless 0.3''.
@@ -482,7 +482,7 @@ Sequences were aligned to the HXB2 reference sequences using mafft \citep{katoh2
 The different steps were assembled into a pipeline using the workflow manager Snakemake \citep{koster_snakemakescalable_2012}.
 
 The sequences and trees were then used for site specific GTR inference as implemented in TreeTime \citep{sagulenko2017treetime}.
-The scripts detailing this analysis and producing the figures are available on GitHub in repository \href{https://github.com/neherlab/SiteSpecificGTR}{neherlab/SiteSpecificGTR}.
+The scripts detailing this analysis and producing the figures are available on GitHub in repository \url{https://github.com/neherlab/2019_Puller_SiteSpecificGTR}{github.org/neherlab/2019\_Puller\_SiteSpecificGTR}.
 
 \clearpage
 \appendix
