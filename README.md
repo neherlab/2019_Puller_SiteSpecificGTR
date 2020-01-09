@@ -23,6 +23,11 @@ The results are saved in a pickle file for further analysis.
 To compare the ability to correctly infer branch lengths using inferred models, we jointly infer models and branch length.
 This step is performed in the script `src/calculate_branch_length.py`.
 
+## Results
+Generating the results below from scratch is computationally expensive and requires 1000s of CPU hours (in 2019).
+The output necessary to reproduce the graphs of the paper are therefore provided as a tarball and sorted on github's large file storage.
+The file is `simulation_results.tar.gz` and the corresponding hash can be found in `.gitattributes`.
+
 
 ## Specific commands
 
