@@ -47,9 +47,9 @@ Natural selection imposes a complex filter on which variants persist in a popula
 Some sites evolve close to neutral, while others are highly conserved, allow only specific states, or only change in concert with other sites.
 Most commonly used evolutionary models, however, ignore much of this complexity and at best account for variation in the rate at which different sites change.
 Here, we present an efficient algorithm to estimate more complex models that allow for site-specific preferences and explore the accuracy at which such models can be estimated from simulated data.
-We find that the interative approximate maximum likelihood schemes uses information in the data efficiently and results in accurate  estimates of site specific preferences from large data sets with moderately diverged sequences.
+We find that the interative approximate maximum likelihood scheme uses information in the data efficiently and results in accurate  estimates of site specific preferences from large data sets with moderately diverged sequences.
 We find that ignoring site specific preferences during branch length estimation of phylogenetic trees -- an assumption of all popular phylogeny software -- results in substantial underestimation comparable to the error incurred when ignoring rate variation.
-However, the joint estimation of branch lengths, site-specific rates, and site-specific preferences can suffer from identifiability problems is typically unable to recover the correct branch lengths.
+However, the joint estimation of branch lengths, site-specific rates, and site-specific preferences can suffer from identifiability problems and is typically unable to recover the correct branch lengths.
 Site-specific preferences estimated from large HIV \emph{pol} alignments show good concordance with intra-host estimates and highlight the inability of estimating deep divergence times of HIV and SIVs using molecular clock approaches due to saturation.
 \end{abstract}
 
@@ -418,7 +418,7 @@ The derivatives of $\LH$ wrt to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need to vanish
 \end{equation}
 where $X$ is one of the parameters we vary.
 
-These conditions can be solved iteratively. We derive these update rule here $\mu^b$ and refer to the appendix for the other (more laborious) update rules.
+These conditions can be solved iteratively. We derive these update rule here $\mu^b$ and refer to the Materials and Methods for the other (more laborious) update rules.
 \begin{equation}
 	\frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} = \sum_{k\in T} \frac{t_k}{\mu^b}\frac{\sum_i Q^b_{k^b_c,i}\left( e^{Q^bt_k} \right)_{i, k^b_p}}{\left( e^{Q^bt_k} \right)_{k^b_c, k^b_p}}
 \end{equation}
