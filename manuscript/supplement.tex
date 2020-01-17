@@ -1,0 +1,189 @@
+\documentclass[aps,rmp,onecolumn]{revtex4}
+%\documentclass[a4paper,10pt]{scrartcl}
+%\documentclass[aps,rmp,twocolumn]{revtex4}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,graphicx}
+\usepackage{color}
+%\usepackage{cite}
+
+\newcommand{\bq}{\begin{equation}}
+\newcommand{\eq}{\end{equation}}
+\newcommand{\bn}{\begin{eqnarray}}
+\newcommand{\en}{\end{eqnarray}}
+\newcommand{\Vadim}[1]{{\color{blue}Vadim: #1}}
+\newcommand{\Richard}[1]{{\color{red}Richard: #1}}
+\newcommand{\gene}[1]{{\it #1}}
+\newcommand{\mat}[1]{{\bf #1}}
+\newcommand{\vecb}[1]{{\bf #1}}
+\newcommand{\abet}{\mathcal{A}}
+\newcommand{\eqp}{p}
+\newcommand{\pc}{c}
+\newcommand{\LH}{\mathcal{L}}
+\newcommand{\lh}{\ell}
+\pdfinfo{%
+  /Title    ()
+  /Author   ()
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+
+\begin{document}
+
+\title{Supplement: Potential and limits of site-specific substitution model inference.}
+\author{Vadim Puller$^{1,2}$ Pavel Sagulenko$^{3}$, Richard A.~Neher$^{1,2}$}
+\affiliation{
+$^{1}$Biozentrum, University of Basel, Klingelbergstrasse 50/70, 4056 Basel, Switzerland\\
+$^{2}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland\\
+$^{3}$Max Planck Institute for Developmental Biology, 72076 T\"ubingen, Germany}
+
+\date{\today}
+\maketitle
+
+For a given set of sequences $\{\vec{s_k}\}$ consisting of the alignment at the tips and the ancestral sequences, the log-likelihood is given by
+\begin{equation}
+	\label{eq:logLH}
+	\lh(\{\vec{s}\} |T, \mat{Q}) = \sum_a \left[\log(\eqp^a_{s^{a}_0}) + \sum_{\beta\in T} \log\left( e^{Q^at_\beta} \right)_{s^a_c, s^a_p}\right]
+\end{equation}
+where $\mat{Q}$ is the site specific substitution model consisting of rates, frequencies, and a symmetric transition matrix
+\begin{eqnarray}
+Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
+Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki} \ .
+\label{eq:Qij_supp}
+\end{eqnarray}
+
+At the maximum, the derivatives of $\lh$ with respect to each of the model parameters should vanish when averaged over all internal site assignments.
+The derivative with respect to $\mu^b$ was is presented in Eq.~12 of the main text.
+Here, we present the corresponding derivations for $\eqp^b_n$ and $W_{nm}$.
+
+To facilitate the algebra below, we summarize the short branch length assumption and the associated linear approximations here:
+\begin{equation}
+	\left( e^{Q t}\right)_{ij} = \delta_{i,j} + \sum_{m=1}^\infty \frac{t^m}{m!}\left( Q^m\right)_{ij} \approx
+	\begin{cases}
+	1 - t\mu^b \sum_{k\neq i} \eqp_k^b W_{ki} & i=j \\
+	t\mu^b \eqp^b_i W_{ik} & i\neq j
+	\end{cases}
+\end{equation}
+The derivatives of $\left( e^{Q t}\right)_{ij}$ with respect to the different model parameters are therefore
+\begin{eqnarray}
+	\frac{d}{d\mu^b} \left( e^{Q^a t}\right)_{ij} &\approx & \delta_{ab}
+	\begin{cases}
+	-t\sum_{k\neq i} \eqp_k^b W_{ki} & i=j \\
+	t \eqp^b_i W_{ik} & i\neq j
+	\end{cases} \\
+	\frac{d}{d\eqp_n^b} \left( e^{Q^a t}\right)_{ij} &\approx & \delta_{ab}
+	\begin{cases}
+	-t\mu^b (1-\delta_{i,n})W_{ni} & i=j \\
+	 t\mu^b \delta_{i,n}W_{nk} & i\neq j
+	\end{cases}\\
+	\frac{d}{dW_{mn}} \left( e^{Q^a t}\right)_{ij} &\approx &
+	\begin{cases}
+	-\delta_{n,j}(1-\delta_{m,i})t \mu^a \eqp^a_m  & i=j \\
+	 \delta_{m,i}\delta_{n,j} t\mu^a \eqp^a_m & i\neq j
+	\end{cases}
+\end{eqnarray}
+Since the matrix $W_{ij}$ is symmetric, the derivative with respect to $W_{ij}$ and $W_{ji}$ are the same.
+We will account for this symmetry below explicitly and refrain from carrying the symmetric term through lengthy derivations.
+Note that the derivatives with respect to $W_{ii}$ vanish as required.
+
+\section*{Update rule for rates $\mu^b$}
+Only site $b$ will contribute to the derivative of $\lh$ with respect to $\mu^b$.
+We will therefore drop all indices referring to the position and re-instantiate the index later.
+As discussed in the main text, we will separate the sum over branches $\beta$ into those where sequence is the same of parent and child ($s_c=s_p$) and those where the sequence differs ($s_c\neq s_p$).
+\begin{equation}
+\begin{split}
+	\frac{d}{d \mu} \lh (\{\vec{s}\} |T, \mat{Q}) &
+	 \approx  -\sum_{\beta\in T,s_c=s_p} \frac{t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c}}{1 - t_\beta \mu \sum_{k\neq s_c} \eqp_k W_{ks_c}}
+	 + \sum_{\beta\in T,s_c\neq s_p} \frac{t_\beta \eqp_{s_c} W_{s_cs_p}}{t_\beta \mu \eqp_{s_c} W_{s_c s_p}}\\
+	 & \approx  -\sum_{\beta\in T,s_c=s_p} t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c} + \sum_{\beta\in T,s_c\neq s_p} \frac{1}{\mu} = - \sum_{j, k\neq j} \eqp_k W_{kj} \tau_j + \sum_{i\neq j} n_{ij}/\mu
+\end{split}
+\end{equation}
+Here, $\tau_j$ is the sum of all branch lengths on which $s_c=j$ and $n_{ij}$ is the number of times the sequence changes from $j$ to $i$ somewhere along the tree.
+Setting this expression to 0 and re-instantiating the site index $b$, we get
+\begin{equation}
+	\mu^b = \frac{\sum_{i\neq j} n^b_{ij}}{\sum_{j, k\neq j} \eqp^b_k W_{kj} \tau^b_j}
+\end{equation}
+
+\section*{Update rule for frequencies $\eqp_i^b$}
+As above, only site $b$ will contribute to the derivative of $\lh$ with respect to $\eqp^b_n$.
+We will therefore drop all indices referring to the position and re-instantiate the index later.
+\begin{equation}
+\begin{split}
+	\frac{d}{d \eqp_n} \lh (\{\vec{s}\} |T, \mat{Q}) & \approx \frac{\delta_{s_0,n}}{\eqp_n}
+	-\sum_{\beta\in T,s_c=s_p} \frac{t_\beta\mu (1-\delta_{n,s_c})W_{n s_c}}{1 - t_\beta\mu \sum_{k\neq s_c} \eqp_k W_{ks_c}}
+	 + \sum_{\beta\in T,s_c\neq s_p} \delta_{n,s_c}\frac{t_\beta\mu W_{ns_p}}{t_\beta \mu \eqp_{s_c} W_{s_c s_p}}\\
+	 & \approx 	\frac{\delta_{s_0,n}}{\eqp_n}-\sum_{\beta\in T,s_c=s_p} t_\beta\mu (1-\delta_{s_c, n})W_{s_c n}
+	 + \sum_{\beta\in T,s_c=n, s_c\neq s_p} \frac{1}{\eqp_{n}}\\
+	 & = 	\frac{\delta_{s_0,n}}{\eqp_n}-\sum_{j\neq n} \tau_j \mu W_{j n}
+	 + \sum_{j\neq n}\frac{n_{nj}}{\eqp_{n}}
+\end{split}
+\end{equation}
+Reinstantiating the position index $b$, we find
+\begin{equation}
+	\eqp^b_n = \frac{\delta_{n,s^b_0}+\sum_j n^b_{nj}}{\sum_{j\neq n} \mu W_{nj}\tau^b_j}
+\end{equation}
+
+\section*{Update rule for the transition matrix $W_{ij}$}
+Since $W_{ij}$ does not depend on the position, the derivative of $\lh$ with respect to $W_{ij}$ depends on all sites in the alignment.
+\begin{equation}
+\begin{split}
+	\frac{d}{d W_{mn}} \lh (\{\vec{s}\} |T, \mat{Q}) & \approx
+	-\sum_a\sum_{\beta\in T,s^a_c=s^a_p} \frac{\delta_{n,s^a_p}(1-\delta_{m,s^a_c})t_\beta \mu^a \eqp^a_m}{1 - t_\beta\mu \sum_{k\neq s^a_c} \eqp_k W_{ks^a_c}}
+	 + \sum_{\beta\in T,s_c\neq s_p} \delta_{m,s_c}\delta_{n,s_p} \frac{t_\beta \mu^a \eqp^a_m}{t_\beta \mu^a \eqp^a_{m} W_{m n}}\\
+	 &\approx -\sum_a\sum_{\beta\in T,s^a_c=s^a_p}  \delta_{n,s^a_p}(1-\delta_{m,s^a_c})t_\beta \mu^a \eqp^a_m + \frac{1}{W_{mn}}\sum_a n^a_{mn}\\
+	 & = \sum_a \tau^{a}_{n} \mu^a \eqp^a_m  + \frac{1}{W_{mn}}\sum_a n^a_{mn}
+\end{split}
+\end{equation}
+Identifying $W_{nm}$ and $W_{mn}$ then results in the following symmetric expression
+\begin{equation}
+	\frac{d}{d W_{mn}} \lh (\{\vec{s}\} |T, \mat{Q}) \approx \sum_a \mu^a (\tau^{a}_{n} \eqp^a_m + \tau^{a}_{m} \eqp^a_n)  + \frac{1}{W_{mn}}\sum_a (n^a_{mn}+ n^a_{nm})
+\end{equation}
+Setting this expression to 0 and solving for $W_{ij}$ we find
+\begin{equation}
+	W_{mn} = \frac{\sum_a n^a_{mn}+ n^a_{nm}}{\sum_a \mu^a(\tau^{a}_{n} \eqp^a_m + \tau^{a}_{m} \eqp^a_n)}
+\end{equation}
+
+
+\section*{Implementation of the constraint $\sum_i \eqp_i^b=1$}
+Equilibrium frequencies need to be normalized to one and constraints of this nature are typically accounted for by Lagrange parameters
+\begin{equation}
+	\frac{d}{d \eqp_n} \left[\lh (\{\vec{s}\} |T, \mat{Q}) + \lambda^b \sum_i \eqp^b_i \right] = 0
+\end{equation}
+which results in a modified extremal condition
+\begin{equation}
+	0 = \delta_{s^b_0,n}-\eqp_{n}\sum_{j\neq n} \tau^b_j \mu^b W_{j n} + \sum_{j\neq n} n^b_{nj} + \eqp^b_{n}\lambda^b
+\end{equation}
+Summing this condition over $n$, we find
+\begin{equation}
+	0 = 1 - \sum_{i,j; i \neq n}  \mu^b \tau^b_j \eqp^b_{i}W_{j i} + \sum_{i,j; i\neq j} n^b_{ij} + \lambda^b
+\end{equation}
+At the extremum of $\mu^v$, we have $\sum_{i,j; i \neq n} \mu^b \tau^b_j \eqp^b_{i}W_{j i} = \sum_{i,j; i\neq j} n_{ij}$ and therefore $\lambda^b=-1$.
+With the constraint $\sum_i \eqp_i^b=1$, the update rule therefore becomes
+\begin{equation}
+	\eqp^b_n = \frac{\delta_{n,s^b_0}+\sum_j n^b_{nj}}{1 + \sum_{j\neq n} \mu W_{nj}\tau^b_j}
+\end{equation}
+In practice it is often helpful to explicitly enforce normalization after each iteration.
+
+\section*{Regularization}
+In absence of data, i.e., when there are very few mutations at a particular site we need to regularize the problem.
+To this end, we assume a Dirichlet prior of the form
+\begin{equation}
+\prod_i \left(\eqp^b_i\right)^c
+\end{equation}
+The derivative of the logarithm of this is $c/\eqp^b_i$ and adding this term to the update rule results in
+\begin{equation}
+	\eqp^b_n = \frac{\delta_{n,s^b_0} + c +\sum_j n^b_{nj}}{1 + qc + \sum_{j\neq n} \mu W_{nj}\tau^b_j}
+\end{equation}
+where $q$ is the size of the alphabet.
+In an analogous fashion, we add a weak regularization to the update rules of $\mu^b$ and $W_{ij}$.
+
+\section*{Summation over unobserved states}
+So far, we have derived conditions that maximize the likelihood as a function of parameters of the substitution model for a fixed assignment of sequences at internal nodes.
+In practice, the internal nodes are unknown and can either be fixed to the most-likely state or summed over.
+Since the approximate maximum likelihood conditions are linear, this average over unknown ancestral states simply amounts to replacing $\tau^b_i$ and $n^b_{ij}$ by their averages which can be efficiently computed by standard recursive algorithms.
+
+
+\end{document}

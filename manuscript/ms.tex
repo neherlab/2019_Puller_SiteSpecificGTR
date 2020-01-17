@@ -370,27 +370,28 @@ Outside of this limit there either isn't enough data to reliably estimate the la
 \label{sec:MM_model}
 Most models of sequence evolution express the probability that sequence $\vec{s}$ evolved from sequence $\vec{r}$ in time $t$ as
 \bq
-P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s_{a},r_{a}}
+P(\vec{s}\leftarrow \vec{r},t,\mat{Q}) = \prod_{a=1}^L \left(e^{\mat{Q}^{a} t}\right)_{s^{a},r^{a}}
 \label{eq:P_prob}
 \eq
-where $\mat{Q}^{a}$ is the substitution matrix governing evolution at site $i$, and $s_{a}$ and $r_{a}$ are the sequence states at position $i$.
+where $\mat{Q}^{a}$ is the substitution matrix governing evolution at site $i$, and $s^{a}$ and $r^{a}$ are the sequence states at position $i$.
 The product runs over all $L$ sites $a$ and amounts to assuming that different sites of the sequence evolve independently.
 
-In absence of recombination, homologous sequences are related by a tree and the likelihood of observing an alignment $\mat{A}=\{\vec{s^k}, k=1..n\}$ conditional on the tree $T$ and the substitution model $\mat{Q}^{a}$ can be written in terms of propagators defined in Eq.~\ref{eq:P_prob}.
+In absence of recombination, homologous sequences are related by a tree and the likelihood of observing an alignment $\mat{A}=\{\vec{s_k}, k=1..n\}$ conditional on the tree $T$ and the substitution model $\mat{Q}^{a}$ can be written in terms of propagators defined in Eq.~\ref{eq:P_prob}.
 It is helpful to express this likelihood as product of sequence propagators defined in Eq.~\ref{eq:P_prob} between sequences at the ends of each branch in the tree (implicitly assuming that on different branches is independent and follows the same time reversible model).
 Unknown sequences of internal nodes $\{\vec{s}'\}$ need to be summed over and the likelihood can be expressed as
 \begin{equation}
-	\LH(\mat{A}|T,\mat{Q}) = \sum_{\{\vec{s}'\}}\prod_{a=1}^L \eqp^{a}_{x^{0}_a} \prod_{k\in T}P(\vec{s}_{k_c}\leftarrow \vec{s}_{k_p},t,\mat{Q}) = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})}  \ ,
+	\LH(\mat{A}|T,\mat{Q}) = \sum_{\{\vec{s}'\}}\prod_{a=1}^L \eqp^{a}_{s^{a}_0} \prod_{k\in T}P(\vec{s}_c\leftarrow \vec{s}_p,t,\mat{Q}) = \sum_{\{\vec{s}\}} e^{\lh(\{\vec{s}\} |T, \mat{Q})}  \ ,
 	\label{eq:LH}
 \end{equation}
-where $\vec{s}_{k_c}$ and $\vec{s}_{k_p}$ are the child and parent sequences of branch $k$, respectively, and the factor $\prod \eqp^{a}_{x^{0}_a}$ is the product of the probabilities of the root sequence $s^{0}_a$ over all positions $i$.
+where $\vec{s}_c$ and $\vec{s}_p$ are the child and parent sequences of branch $k$, respectively, and the factor $\prod_a \eqp^{a}_{s^{a}_0}$ is the product of the probabilities of the root sequence $s^{a}_0$ over all positions $a$.
 The probabilities $\vec{\eqp}^{a}$ are the equiblirium probabilities of the substitution model at position $a$.
 The latter ensures that the likelihood is insensitive to a particular choice of the tree root.
 This equation defines the log-likelihood $\lh$ of a particular internal node assignment $\{\vec{s}'\}$ which is given by
 \begin{equation}
-	e^{\lh(\mat{A}, \{\vec{s}'\} |T, \mat{Q})} = \sum_a \left[\log(\eqp^a_{s^{0}_a}) + \sum_{k\in T} \log\left( e^{Q^at_k} \right)_{k^a_c, k^a_p}\right]
+	\label{eq:logLH}
+	\lh(\mat{A}, \{\vec{s}'\} |T, \mat{Q}) = \sum_a \left[\log(\eqp^a_{s^{a}_0}) + \sum_{k\in T} \log\left( e^{Q^at_k} \right)_{s^a_c, s^a_p}\right]
 \end{equation}
-where $k^a_c$ and $k^a_p$ are indices corresponding to the child and parent sequence of branch $k$.
+where $s^a_c$ and $s^a_p$ are indices corresponding to the child and parent sequence of branch $k$.
 
 The sum over unknown ancestral sequences can be computed efficiently using standard dynamic programming techniques.
 Nevertheless, it requires $\mathcal{O}(n\times L \times q^2)$ operations (where $q$ is the size of the alphabet $\abet$) and optimizing it with respect to a large number of parameters is costly.
@@ -401,7 +402,7 @@ Such a site-specific general time-reversible (GTR)) model, can be parameterized 
 \begin{eqnarray}
 Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
 Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki}
-\label{eq:Qij_supp}
+\label{eq:Qij_app}
 \end{eqnarray}
 where $W_{ij}$ is a symmetric matrix with $W_{ii}=0$ and the second equation ensures conservation of probability.
 In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to ensure that the average rate per site is $\mu^{a}$.
@@ -418,34 +419,30 @@ The derivatives of $\LH$ wrt to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need to vanish
 \end{equation}
 where $X$ is one of the parameters we vary.
 
-These conditions can be solved iteratively. We derive these update rule here $\mu^b$ and refer to the Materials and Methods for the other (more laborious) update rules.
+These conditions can be solved iteratively. We derive these update rule here $\mu^b$ and refer to the supplement for the other (more laborious) update rules.
+The derivative of the log-likelihood for a specific sequence assignment is given by
 \begin{equation}
-	\frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} = \sum_{k\in T} \frac{t_k}{\mu^b}\frac{\sum_i Q^b_{k^b_c,i}\left( e^{Q^bt_k} \right)_{i, k^b_p}}{\left( e^{Q^bt_k} \right)_{k^b_c, k^b_p}}
+	\frac{\partial \lh(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} = \sum_{\beta\in T} \frac{t_\beta}{\mu^b}\frac{\sum_i Q^b_{s^b_c,i}\left( e^{Q^bt_\beta} \right)_{i, s^b_p}}{\left( e^{Q^bt_\beta} \right)_{s^b_c, s^b_p}} \ ,
 \end{equation}
-The individual terms in this sum behave very differently for cases where $k^b_c=k^b_p$ (no change at site $b$ on branch $k$) and $k^b_c\neq k^b_p$ (at least one mutation).
-In the limit of short branches $\mu^b t_k\ll 1$, we can expand the matrix exponential $e^{\mat{Q}t}=\delta_{ij} + \mat{Q}t+\cdots$ to obtain more insightful expressions and we will separate branches with $k^b_c=k^b_p$  and $k^b_c\neq k^b_p$ right away
+where $s^b_p$ and $s^b_c$ are the states at site $b$ at the parent and child end of branch $\beta$.
+The individual terms in this sum behave very differently for cases where $s^b_c=s^b_p$ (no change at site $b$ on branch $\beta$) and $s^b_c\neq k^b_p$ (at least one mutation).
+In the limit of short branches $\mu^b t_\beta \ll 1$, we can expand the matrix exponential $e^{\mat{Q}t}=\delta_{ij} + \mat{Q}t+\cdots$ to obtain approximate but solvable conditions for maximum likelihood parameter estimates, see supplement.
+We will separate the sum over branches into those with $s^b_c=s^b_p$  and $s^b_c\neq s^b_p$.
+Suppressing the index $b$ for the position in the sequence, we find
 \begin{equation}
 \begin{split}
-	\frac{\partial \ell(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} &\approx \sum_{k\in T, k^b_c=k^b_p} \frac{t_k}{\mu^b}\frac{\sum_i Q_{k^b,i}(\delta_{i,k^b} + t_k Q^b_{i,k^b}\cdots)}{1 - t_k\mu^b\sum_{j}\eqp_j W_{k^bj}+\ldots} +
-	\sum_{k\in T, k^b_c\neq k^b_p} \frac{t_k}{\mu^b}\frac{\sum_i Q_{k^b_c,i}(\delta_{i,k^b_p} + t_k Q^b_{i,k^b_p}\cdots)}{t_k\mu^b\eqp_{k^b_c} W_{k^b_ck^b_p}+\ldots} \\
-		&\approx -\sum_{k\in T, k^b_c=k^b_p}t_k \sum_i \eqp_{i}W_{i,k^b} +
-	\sum_{k\in T, k^b_c\neq k^b_p} \frac{t_k}{\mu^b}\frac{p_{k^b_c}W_{k^b_c, l^b_p} + \cdots}{t_k\eqp_{k^b_c} W_{k^b_ck^b_p}+\ldots} \\
-		&\approx -\sum_{k\in T, k^b_c=k^b_p}t_k \sum_i \eqp_{i}W_{i,k^b} + 	\sum_{k\in T, k^b_c\neq k^b_p} \frac{1}{\mu^b} \\
-		&= -\sum_{ij}\eqp_{i}W_{i,j}\tau_j^b + \frac{1}{\mu^b}\sum_{ij} n^b_{ij}
+	\frac{d}{d \mu} \lh (\{\vec{s}\} |T, \mat{Q}) &
+	 \approx  -\sum_{\beta\in T,s_c=s_p} \frac{t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c}}{1 - t_\beta \mu \sum_{k\neq s_c} \eqp_k W_{ks_c}}
+	 + \sum_{\beta\in T,s_c\neq s_p} \frac{t_\beta \eqp_{s_c} W_{s_cs_p}}{t_\beta \mu \eqp_{s_c} W_{s_c s_p}}\\
+	 & \approx  -\sum_{\beta\in T,s_c=s_p} t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c} + \sum_{\beta\in T,s_c\neq s_p} \frac{1}{\mu} = - \sum_{j, k\neq j} \eqp_k W_{kj} \tau^b_j + \sum_{i\neq j} n^b_{ij}/\mu
 	\end{split}
 \end{equation}
 where $\tau^b_j$ is the sum of all branch length along which site $b$ is in state $j$ and $n^b_{ij}$ is the number of times the sequences at site $b$ changes from $j$ to $i$ along branches of the tree.
-This condition (and the corresponding ones in the supplement suggest solution at fixed $\tau^b_j$ and $n^b_{ij}$ using the following iterative update:
-\begin{equation}
-\label{eq:update_app}
-	\begin{split}
-		\mu^b & \leftarrow \mu^b\frac{\pc+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
-		\eqp^b_i & \leftarrow \eqp^b_i\frac{\pc+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(q\pc+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
-		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\tau_j^b + \eqp_j^b \tau_i^b)} \\
-	\end{split}
-\end{equation}
-where $\pc$ is a pseudocount analogous to a Dirichlet prior that in the absence of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $\pc$ over the total tree length.
-To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\tau_j^b$ -- each appropriately summed over sites or states.
+Additional terms necessary for regularization and normalization are discussed in the supplement.
+Setting this expression to zero (and the corresponding ones in the supplement) suggests solving for $\mu^b$ at fixed $\tau^b_j$ and $n^b_{ij}$ using the iterative update rules given in Eqs.~\ref{eq:update}.
+
+In addition, we introduced a pseudocount $\pc$ analogous to a Dirichlet prior that in the absence of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $\pc$ over the total tree length, see supplement.
+To make the crucial features of these update rules more explicit, we have multiplied numerator and denominator in Eqs.~\ref{eq:update} with the parameter that is being updated. This (i) makes the update explicitly multiplicative and therefore ensures positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\tau_j^b$ -- each appropriately summed over sites or states.
 
 \subsection*{Implementation}
 We extended our package TreeTime \citep{sagulenko2017treetime} to handle site specific GTR models by adding an additional class \texttt{GTR\_site\_specific} that generalizes the \texttt{GTR} class.
@@ -533,8 +530,6 @@ The scripts detailing this analysis and producing the figures are available on G
 	Panel A\&B shows the ratio of in/out rates for consensus nucleotides/amino acids along the \gene{pol} of HIV-1 subtype B vs the diversity in columns of the corresponding alignment.}
 	\label{fig:HIV_diversity_supp}
 \end{figure*}
-
-
 
 
 
