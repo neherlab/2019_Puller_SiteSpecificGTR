@@ -36,8 +36,8 @@
 
 \begin{document}
 
-\title{Potential and limits of site-specific substitution model inference.}
-\author{Vadim Puller$^{1,2}$ Pavel Sagulenko$^{3}$, Richard Neher$^{1,2}$}
+\title{Efficient inference, potential, and limitations of site-specific substitution models}
+\author{Vadim Puller$^{1,2}$ Pavel Sagulenko$^{3}$, Richard A.~Neher$^{1,2}$}
 \affiliation{
 $^{1}$Biozentrum, University of Basel, Klingelbergstrasse 50/70, 4056 Basel, Switzerland\\
 $^{2}$SIB Swiss Institute of Bioinformatics, Basel, Switzerland\\
@@ -97,7 +97,7 @@ We apply this algorithm to large HIV-1 alignments and explore the consequences f
 	%\includegraphics[width=0.32\textwidth]{../figures/avg_rate_dressed.pdf}
 	\includegraphics[width=0.48\textwidth]{{../figures/rate_correlation_dressed_nuc_ratealpha1.5}.pdf}
 	\caption{{\bf Accuracy of iterative estimation of site-specific GTR models as a function of the expected number of state changes along the tree.} (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the Poisson statistics of observable mutations. Colored lines correspond to data generated assuming Gamma distributed rate variation with $\alpha=1.5$, gray lines with $\alpha=3$.
-	The estimates are more accurate than naive estimates from the state frequencies in alignment columns. The advantage over naive estimates increases with data set size as seem from different curves with $n\in [100,300,1000,3000]$ sequences per tree.
+	The estimates are more accurate than naive estimates from the state frequencies in alignment columns. The advantage over naive estimates increases with data set size as seen from different curves with $n\in [100,300,1000,3000]$ sequences per tree.
 	(B) The relative substitution rates are accurately inferred as soon as the typical site experiences several substitutions across the tree as quantified here as Pearson correlation coefficient between true and inferred rates. Regularization via pseudo-counts reduces over-fitting at low divergence.
 	Analogous results for alphabets of size $q=20$ are shown in Fig.~\ref{fig:dressed_supp}.
 }
@@ -115,7 +115,7 @@ Q^{a}_{ij} &=& \mu^{a}\eqp^{a}_{i} W_{ij} \textrm{ for } i\neq j,\nonumber \\
 Q^{a}_{ii} &=& -\sum_k Q^{a}_{ki} \ .
 \label{eq:Qij}
 \end{eqnarray}
-Here, $\mu^a$ is the substitution rate at site $a$, $\eqp^a_i$ is the equilibrium frequency of state $i$ at site $a$, and $W_{ij}$ is a symmetric substitution matrix that we assume to be the same for all sites.
+Here, $\mu^a$ is the substitution rate at site $a$, $\eqp^a_i$ is the equilibrium frequency of state $i$ at site $a$, and $W_{ij}$ is a symmetric substitution matrix that we assume to be the same for all sites (in what follows, super script $a$ will always refer to the position in the sequence, while subscript $i,j,n,m$ refers to the state).
 The second equation ensures conservation of probability.
 In addition, we require $\sum_i \eqp^{a}_i = 1$ and $\sum_{a=1}^L\sum_{i\neq j}W_{ij}p^{a}_ip^{a}_j=L$ to normalize the frequencies and fix the scale of $W_{ij}$.
 
@@ -123,26 +123,26 @@ Extending the approach by \citet{bruno1996modeling}, we show in Materials and Me
 \begin{equation}
 \label{eq:update}
 	\begin{split}
-		\mu^b & \leftarrow \mu^b\frac{\pc+\sum_{ij} n^b_{ij}}{\sum_{ij}\mu^b \eqp_{i}W_{ij}\tau_j^b} \\
-		\eqp^b_i & \leftarrow \eqp^b_i\frac{\pc+\delta_{is^{b}} + \sum_{j\neq i} n^b_{ij}}{\eqp^b_i(q\pc+1) + \mu^b\eqp^b_i \sum_{j}W_{ij}\tau_j^b} \\
-		W_{ij} & \leftarrow W_{ij}\frac{\sum_b (n^b_{ij}+n^b_{ji})}{\sum_b \mu^b W_{ij}(\eqp_i^b\tau_j^b + \eqp_j^b \tau_i^b)} \\
+		\mu^a & \leftarrow \mu^a\frac{\pc+\sum_{ij} n^a_{ij}}{\sum_{ij}\mu^a \eqp_{i}W_{ij}\tau_j^a} \\
+		\eqp^a_i & \leftarrow \eqp^a_i\frac{\pc+\delta_{is^{a}} + \sum_{j\neq i} n^a_{ij}}{\eqp^a_i(q\pc+1) + \mu^a\eqp^a_i \sum_{j}W_{ij}\tau_j^a} \\
+		W_{ij} & \leftarrow W_{ij}\frac{\sum_a (n^a_{ij}+n^a_{ji})}{\sum_a \mu^a W_{ij}(\eqp_i^a\tau_j^a + \eqp_j^a \tau_i^a)} \\
 	\end{split}
 \end{equation}
 approximately maximize the likelihood of the data.
-Here $\tau^b_j$ is the time site $b$ spends in state $j$ across the tree, $n^b_{ij}$ are the number of transitions from state $j$ to state $i$ at site $b$,
-$\pc$ is a pseudocount analogous to a Dirichlet prior that in the absence of data will drive the $\eqp_i^b$ to a flat distribution and the substitution rates to $\pc$ divided by the total tree length.
+Here $\tau^a_j$ is the time site $a$ spends in state $j$ across the tree, $n^a_{ij}$ are the number of transitions from state $j$ to state $i$ at site $a$,
+$\pc$ is a pseudocount analogous to a Dirichlet prior that in the absence of data will drive the $\eqp_i^a$ to a flat distribution and the substitution rates to $\pc$ divided by the total tree length.
 To make the behavior of these update rules more explicit, we have multiplied numerator and denominator with the parameter that is being updated.
-This (i) shows that the update rules are multiplicative and therefore ensure positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^b_{ij}$ and the {\it expected} number $\eqp^b_i W_{ij}\tau_j^b$ -- each appropriately summed over sites or states.
+This (i) shows that the update rules are multiplicative and therefore ensure positivity, and (ii) illustrates that each of these rules are the ratio of the {\it observed} number of transitions between states $n^a_{ij}$ and the {\it expected} number $\eqp^a_i W_{ij}\tau_j^a$ -- each appropriately summed over sites or states.
 These update rules are an example of non-negative factorization algorithms \citep{lee_algorithms_2001}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ACCURACY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Accuracy of inferences}
-The validity of this iterative solution will depend (i) on the accuracy of the linear approximation, (ii) the accuracy to which $n_{ij}^b$ and $\tau_{j}^b$ can be estimated, and (iii) the accuracy of the tree reconstruction.
+The validity of this iterative solution will depend (i) on the accuracy of the linear approximation, (ii) the accuracy to which $n_{ij}^a$ and $\tau_{j}^a$ can be estimated, and (iii) the accuracy of the tree reconstruction.
 In addition, the Maximum Likelihood estimates might deviate from the true parameters due to over-fitting.
 
-To assess these sources of error independently, we simulated sequences evolving along trees and explicitly recorded $n_{ij}^b$ and the $\tau_j^b$ for a range of sample sizes, levels of divergence, and different degrees of variation between sites, see Materials and Methods.
+To assess these sources of error independently, we simulated sequences evolving along trees and explicitly recorded $n_{ij}^a$ and the $\tau_j^a$ for a range of sample sizes, levels of divergence, and different degrees of variation between sites, see Materials and Methods.
 For each parameter set, we generated two random Yule trees, for each tree generated two random site-specific models, and for each tree/model pair two alignments, resulting in a total of eight data set per parameter combination.
 We quantified the accuracy of the inferences as $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \eqp_i^a)^2$ where $\hat{\eqp}_i^a$ and $\eqp_i^a$ are the inferred and true equilibrium probabilities, respectively.
 We compared inferences using (i) the true ancestral sequences, (ii) reconstructed ancestral sequences, and (iii) reconstructions on the true phylogenetic tree.
@@ -155,7 +155,7 @@ We compared inferences using (i) the true ancestral sequences, (ii) reconstructe
 	\caption{{\bf Quantification of errors stemming from tree inference and ancestral reconstruction.}
 	Panels A and B show the mean-squared deviation $\chi^2$ of inferred $\hat{\eqp}_i^a$ from the true $\eqp_i^a$ for 4-letter and 20-letter alphabets, respectively.
 	At large root-to-tip distances, ancestral reconstruction becomes less and less certain and estimation of $\eqp_i^a$ fails (red lines).
-	These errors are gradually eliminated by first summing over ancestral uncertainty (violet), iteratively redoing ancestral reconstruction using the inferred model (brown), and re-optimizing branch length using the updated models (or using the true tree, yellow/pink).
+	These errors are gradually eliminated by first summing over ancestral uncertainty (violet), iteratively redoing ancestral reconstruction using the inferred model (brown), and re-optimizing branch lengths using the updated models (or using the true tree, yellow/pink).
 	Data in this figure uses was generated assuming Gamma distributed rate variation with $\alpha=1.5$.
 	}
 	\label{fig:reconstructed}
@@ -166,14 +166,14 @@ Fig.~\ref{fig:dressed} shows the average squared error $\chi^2$ for a trees with
 The graph contains estimates of $\eqp_i^a$ from the alignment and via the iterative scheme with correct $n_{ij}^a$ and $\tau_i^a$ as input.
 The data are shown on double logarithmic scales, such that the approximately straight decrease of $\chi^2$ with slope -1 implies that the accuracy is inversely proportional to the expected number of substitutions.
 This scaling suggests that accuracy is limited by the inherent stochasticity of the evolutionary process and that the inference uses all available information efficiently.
-The data shown in Fig.~\ref{fig:reconstructed} was generated by drawing site-specific rates from a Gamma distribution with $\alpha=1.5$ (colored lines) and $\alpha=3$ (grey lines).
-The scaling behavior $\chi_2\sim 1/\textrm{tree length}$ is more evident for $\alpha=3$ than for $\alpha=1.5$.
+The simulation data was generated by drawing site-specific rates from a Gamma distribution with $\alpha=1.5$ (colored lines) and $\alpha=3$ (grey lines).
+The scaling behavior $\chi_2 (\textrm{tree length})^{-1}$ is more evident for $\alpha=3$ than for $\alpha=1.5$.
 In case of strong rate variation, the average accuracy is dominated by a small number of sites with low rates at which frequencies are estimated poorly and the average tree length does not capture behavior at these sites.
-A naive approach using the frequencies of different sequences states in the alignment as estimates for $\eqp_i^b$ is much less accurate due to the correlation induced by shared ancestry (orange lines in Fig.~\ref{fig:reconstructed}A).
+A naive approach using the frequencies of different sequences states in the alignment as estimates for $\eqp_i^a$ is much less accurate due to the correlation induced by shared ancestry (orange lines in Fig.~\ref{fig:dressed}A).
 
 At the largest substitution rates, branch lengths are on the order of 0.5 and the linear approximation underlying the iterative equations is not longer accurate.
 Nevertheless, the accuracy of the $\hat{\eqp}_i^a$ continues to increase.
-While equilibrium frequencies are insensitive, the substitution rate estimates are affected by linearization and Eq.~\ref{eq:update} will consistently underestimate $\mu^b$.
+While equilibrium frequencies are insensitive, the substitution rate estimates are affected by linearization and Eq.~\ref{eq:update} will consistently underestimate $\mu^a$.
 This is expected as the linearization ignores cases where the same site changes twice along a branch in very much the same way as Hamming distance will underestimate branch length.
 The relative substitution rates, however, are accurately estimated (with Pearson correlation coefficients $>0.9$ as soon as the majority of sites experience several mutations across the tree), see Fig.~\ref{fig:dressed}B.
 
@@ -181,7 +181,7 @@ The relative substitution rates, however, are accurately estimated (with Pearson
 In a typical scenario, ancestral sequences are unknown and need to be inferred or summed over (marginalized).
 To test the influence of tree and ancestral state reconstruction, we reconstructed phylogenetic trees using IQ-tree \citep{nguyen_iq-tree:_2015} with a GTR+R10 model (simulated nucleotide sequences) or FastTree \citep{FastTree} using the default 20 category (simulated amino-acid sequences).
 Fig~\ref{fig:reconstructed} compares different schemes to reconstruct ancestral sequences, infer substitution models, and optimize the tree.
-The simplest approach is to take the inferred tree as given, reconstruct the ancestral states using a standard evolutionary model (e.g.~Jukes-Cantor model) and calculate $n^b_{ij}$ and $\tau_i^b$ from this reconstruction.
+The simplest approach is to take the inferred tree as given, reconstruct the ancestral states using a standard evolutionary model (e.g.~Jukes-Cantor model) and calculate $n^a_{ij}$ and $\tau_i^a$ from this reconstruction.
 This naive approach works well up to root-to-tip distances of about 0.3, beyond which estimates deteriorate, see Fig~\ref{fig:reconstructed} (``Reconstructed ancestral sequences'', red line).
 Instead of using only the most likely ancestral sequences, we can instead average over all possible ancestral states, which results in a modest improvement in accuracy (``Marginalized ancestral sequences'', purple line in Fig.~\ref{fig:reconstructed}).
 More significant gains are made when iterating model inference and ancestral reconstruction using the inferred site-specific model (``Iterative model estimation'', brown line).
@@ -189,7 +189,9 @@ The accuracy now continues to improve up to root-to-tip distances of about one.
 At this level of divergence, tree reconstruction starts becoming problematic and branch lengths deviate substantially from their true values.
 Using the true tree instead of the reconstructed tree leads to continuous improvements of accuracy with increasing levels of divergence (yellow line).
 Similar improvements are achieved by optimizing tree branch lengths along with the model.
-We found little difference between 4-letter and 20-letter alphabets in the overall accuracy of the estimated model and its dependence on the different approximations, compare Fig.~\ref{fig:reconstructed}A\&B.
+We found qualitatively similar patterns for 4-letter and 20-letter alphabets in the overall accuracy of the estimated model and its dependence on the different approximations, compare Fig.~\ref{fig:reconstructed}A\&B.
+For larger alphabets, the breakdown at large root-to-tip distances is less dramatic and sets in at larger values.
+However, these difference depend on the skew of the equilibrium probabilities.
 
 \subsection*{Ignoring site-specific frequencies results in branch length underestimates}
 As previously observed by various authors \citep{halpern_evolutionary_1998,hilton_modeling_2018}, sites with heavily skewed preferences for specific states result in underestimation of branch lengths if uniform equilibrium frequencies are assumed.
@@ -201,7 +203,7 @@ In other words, this underestimation is the result of incorrect models of satura
 	\centering
 	\includegraphics[width=0.48\textwidth]{{../figures/nuc_length_n1000}.pdf}
 	\includegraphics[width=0.48\textwidth]{{../figures/nuc_depth_n1000}.pdf}
-	\caption{{\bf Skewed equilibrium concentration results in branch length under estimates}.
+	\caption{{\bf Skewed equilibrium concentration results in branch length underestimates}.
 	Panel A shows the inferred average branch length as estimated by IQ-Tree and TreeTime as a function of the true average branch length. Panel B shows the results of the same optimization for the average root-to-tip distance, which is dominated by deep long branches which are more strongly affected by underestimation. Not that inferred site-specific models only partially ameliorate underestimation, see main text. Parameters: $n=1000$, $\alpha=1.5$. }
 	\label{fig:tree_length}
 \end{figure*}
@@ -222,6 +224,7 @@ The underestimation of branch lengths is less severe for larger alphabets of if 
 	\caption{{\bf Sensitivity of branch length estimates on model misspecification}.
 	Panels A \& B show the relative error in total tree length when using a mixture model as defined in Eq.~\ref{eq:mixture_model} for branch length inference. Panel A shows this error as a function of the mixing fraction $\alpha$ for $\langle \mu \rangle = 0.2$. Panel B shows the error as a function of the evolutionary rate $\langle \mu \rangle$ for $\alpha=1$.
 	The mixing is applied to the equilibrium frequencies $\eqp_i^a$, the rates $\mu^a$, or both.
+	The models assume an alphabet size $q=4$ (nucleotides).
 	}
 	\label{fig:model_deviation}
 \end{figure*}
@@ -314,7 +317,7 @@ As soon as the length of the simulated branch approaches 0.2, the length inferre
 As expected, these deviations are even more severe when estimating branch length as simple sequence divergence (p-distance), while using the generating model reproduces the correct branch length.
 
 Assuming a typical evolutionary rate of HIV of 0.002 changes per site and year, this analysis suggests that length estimates of branches longer than 100 years start to become inaccurate.
-Furthermore, this analysis suggests very little signal to estimate the length of branches that are longer than 300y.
+Furthermore, this analysis suggests very little signal to estimate the length of branches that are longer than 300 years.
 
 
 \begin{figure*}[tb]
@@ -373,7 +376,7 @@ Hence the approach described in this work is largely restricted to cases like HI
 Outside of this limit there either isn't enough data to reliably estimate the large number of coefficients, or epistatic interactions need to be taken into account -- probably at the expense of ignoring phylogenetic signals \citep{morcos_direct-coupling_2011}.
 
 \section*{Acknowledgments}
-We are grateful to Sarah Hilton and Pierre Barrat for stimulating discussions and insightful comments on the manuscript.
+We are grateful to Sarah Hilton and Pierre Barrat-Charlaix for stimulating discussions and insightful comments on the manuscript.
 This work was supported by core funding by the University of Basel, the Max Planck society, and ERC Stg 260686.
 
 \bibliography{GTRbib}
@@ -435,28 +438,28 @@ The derivatives of $\LH$ with respect to $\mu^a$, $\eqp_i^a$, and $W_{ij}$ need 
 where $X$ is one of the parameters we vary.
 
 These conditions can be solved iteratively.
-Here, we derive the update for $\mu^b$ and refer to the supplement for the other update rules.
+Here, we derive the update for $\mu^a$ and refer to the supplement for the other update rules.
 The derivative of the log-likelihood for a specific sequence assignment is given by
 \begin{equation}
-	\frac{\partial \lh(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^b} = \sum_{\beta\in T} \frac{t_\beta}{\mu^b}\frac{\sum_i Q^b_{s^b_c,i}\left( e^{Q^bt_\beta} \right)_{i, s^b_p}}{\left( e^{Q^bt_\beta} \right)_{s^b_c, s^b_p}} \ ,
+	\frac{\partial \lh(\{\vec{s}\}|T,\mat{Q})}{\partial \mu^a} = \sum_{\beta\in T} \frac{t_\beta}{\mu^a}\frac{\sum_i Q^a_{s^a_c,i}\left( e^{Q^at_\beta} \right)_{i, s^a_p}}{\left( e^{Q^at_\beta} \right)_{s^a_c, s^a_p}} \ ,
 \end{equation}
-where $s^b_p$ and $s^b_c$ are the states at site $b$ at the parent and child end of branch $\beta$.
-The individual terms in this sum behave very differently for cases where $s^b_c=s^b_p$ (no change at site $b$ on branch $\beta$) and $s^b_c\neq k^b_p$ (at least one mutation).
-In the limit of short branches $\mu^b t_\beta \ll 1$, we can expand the matrix exponential $e^{\mat{Q}t}=\delta_{ij} + \mat{Q}t+\cdots$ to obtain approximate but solvable conditions for maximum likelihood parameter estimates, see supplement.
-We will separate the sum over branches into those with $s^b_c=s^b_p$ and $s^b_c\neq s^b_p$.
-Suppressing the index $b$ for the position in the sequence, we find
+where $s^a_p$ and $s^a_c$ are the states at site $a$ at the parent and child end of branch $\beta$.
+The individual terms in this sum behave very differently for cases where $s^a_c=s^a_p$ (no change at site $a$ on branch $\beta$) and $s^a_c\neq k^a_p$ (at least one mutation).
+In the limit of short branches $\mu^a t_\beta \ll 1$, we can expand the matrix exponential $e^{\mat{Q}t}=\delta_{ij} + \mat{Q}t+\cdots$ to obtain approximate but solvable conditions for maximum likelihood parameter estimates, see supplement.
+We will separate the sum over branches into those with $s^a_c=s^a_p$ and $s^a_c\neq s^a_p$.
+Suppressing the index $a$ for the position in the sequence, we find
 \begin{equation}
 \begin{split}
 	\frac{d}{d \mu} \lh (\{\vec{s}\} |T, \mat{Q}) &
 	 \approx  -\sum_{\beta\in T,s_c=s_p} \frac{t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c}}{1 - t_\beta \mu \sum_{k\neq s_c} \eqp_k W_{ks_c}}
 	 + \sum_{\beta\in T,s_c\neq s_p} \frac{t_\beta \eqp_{s_c} W_{s_cs_p}}{t_\beta \mu \eqp_{s_c} W_{s_c s_p}}\\
-	 & \approx  -\sum_{\beta\in T,s_c=s_p} t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c} + \sum_{\beta\in T,s_c\neq s_p} \frac{1}{\mu} = - \sum_{j, k\neq j} \eqp_k W_{kj} \tau^b_j + \sum_{i\neq j} n^b_{ij}/\mu
+	 & \approx  -\sum_{\beta\in T,s_c=s_p} t_\beta \sum_{k\neq s_c} \eqp_{k} W_{k s_c} + \sum_{\beta\in T,s_c\neq s_p} \frac{1}{\mu} = - \sum_{j, k\neq j} \eqp_k W_{kj} \tau^a_j + \sum_{i\neq j} n^a_{ij}/\mu
 	\end{split}
 \end{equation}
-where $\tau^b_j$ is the sum of all branch length along which site $b$ is in state $j$ and $n^b_{ij}$ is the number of times the sequences at site $b$ changes from $j$ to $i$ along branches of the tree (we have re-instantiated the position index $b$ in the last line).
+where $\tau^a_j$ is the sum of all branch length along which site $a$ is in state $j$ and $n^a_{ij}$ is the number of times the sequence at site $a$ changes from $j$ to $i$ along branches of the tree (we have re-instantiated the position index $a$ in the last line).
 Additional terms necessary for regularization and normalization are discussed in the supplement.
-Setting this expression to zero (and the corresponding ones in the supplement) suggests solving for $\mu^b$ at fixed $\tau^b_j$ and $n^b_{ij}$ using the iterative update rules given in Eqs.~\ref{eq:update}.
-The quantities $n^b_{ij}$ and $\tau^b_i$ can be averaged over unknown ancestral states.
+Setting this expression to zero (and the corresponding ones in the supplement) suggests solving for $\mu^a$ at fixed $\tau^a_j$ and $n^a_{ij}$ using the iterative update rules given in Eqs.~\ref{eq:update}.
+The quantities $n^a_{ij}$ and $\tau^a_i$ can be averaged over unknown ancestral states.
 
 
 \subsection*{Implementation}
