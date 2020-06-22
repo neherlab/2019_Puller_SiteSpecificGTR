@@ -1,4 +1,4 @@
-\documentclass[aps,rmp,twocolumn]{revtex4}
+\documentclass[aps,rmp,twocolumn,linenumbers]{revtex4-1}
 %\documentclass[a4paper,10pt]{scrartcl}
 %\documentclass[aps,rmp,twocolumn]{revtex4}
 
@@ -33,7 +33,6 @@
   /Keywords ()
 }
 
-
 \begin{document}
 
 \title{Efficient inference, potential, and limitations of site-specific substitution models}
@@ -51,7 +50,7 @@ Some sites evolve close to neutrally, while others are highly conserved, allow o
 Most commonly used evolutionary models, however, ignore much of this complexity and at best account for variation in the rate at which different sites change.
 Here, we present an efficient algorithm to estimate more complex models that allow for site-specific preferences and explore the accuracy at which such models can be estimated from simulated data.
 We find that an iterative approximate maximum likelihood scheme uses information in the data efficiently and accurately estimates site-specific preferences from large data sets with moderately diverged sequences.
-Ignoring site-specific preferences during estimation of branch length of phylogenetic trees -- an assumption of most phylogeny software -- results in substantial underestimation comparable to the error incurred when ignoring rate variation.
+Ignoring site-specific preferences during estimation of branch length of phylogenetic trees -- an assumption of most phylogenetic analyses -- results in substantial underestimation comparable to the error incurred when ignoring rate variation.
 However, the joint estimation of branch lengths, site-specific rates, and site-specific preferences can suffer from identifiability problems and is typically unable to recover the correct branch lengths.
 Site-specific preferences estimated from large HIV \emph{pol} alignments show qualitative concordance with intra-host estimates of fitness costs.
 Analysis of site-specific HIV substitution models suggests near saturation of divergence after a few hundred years.
@@ -143,7 +142,7 @@ The validity of this iterative solution will depend (i) on the accuracy of the l
 In addition, the Maximum Likelihood estimates might deviate from the true parameters due to over-fitting.
 
 To assess these sources of error independently, we simulated sequences evolving along trees and explicitly recorded $n_{ij}^a$ and the $\tau_j^a$ for a range of sample sizes, levels of divergence, and different degrees of variation between sites, see Materials and Methods.
-For each parameter set, we generated two random Yule trees, for each tree generated two random site-specific models, and for each tree/model pair two alignments, resulting in a total of eight data set per parameter combination.
+For each parameter set, we generated two random Yule trees, for each tree generated two random site-specific models, and for each tree/model pair two alignments, resulting in a total of eight data sets per parameter combination.
 We quantified the accuracy of the inferences as $\chi^2 = L^{-1}\sum_{a,i}(\hat{\eqp}_i^a - \eqp_i^a)^2$ where $\hat{\eqp}_i^a$ and $\eqp_i^a$ are the inferred and true equilibrium probabilities, respectively.
 We compared inferences using (i) the true ancestral sequences, (ii) reconstructed ancestral sequences, and (iii) reconstructions on the true phylogenetic tree.
 
@@ -162,7 +161,7 @@ We compared inferences using (i) the true ancestral sequences, (ii) reconstructe
 \end{figure*}
 
 
-Fig.~\ref{fig:dressed} shows the average squared error $\chi^2$ for a trees with $n\in [100,300,1000,3000]$ taxa and a range of substitution rates as a function of the expected number of substitutions per site.
+Fig.~\ref{fig:dressed} shows the average squared error $\chi^2$ for a tree with $n\in [100,300,1000,3000]$ taxa and a range of substitution rates as a function of the expected number of substitutions per site.
 The graph contains estimates of $\eqp_i^a$ from the alignment and via the iterative scheme with correct $n_{ij}^a$ and $\tau_i^a$ as input.
 The data are shown on double logarithmic scales, such that the approximately straight decrease of $\chi^2$ with slope -1 implies that the accuracy is inversely proportional to the expected number of substitutions.
 This scaling suggests that accuracy is limited by the inherent stochasticity of the evolutionary process and that the inference uses all available information efficiently.
@@ -463,14 +462,17 @@ The quantities $n^a_{ij}$ and $\tau^a_i$ can be averaged over unknown ancestral 
 
 
 \subsection*{Implementation}
-We extended our package TreeTime \citep{sagulenko2017treetime} to handle site-specific GTR models by adding an additional class \texttt{GTR\_site\_specific} that generalizes the \texttt{GTR} class.
+We extended our package TreeTime \citep{sagulenko2017treetime} to handle site-specific GTR models as defined in Eq.~\ref{eq:Qij} by adding an additional class \texttt{GTR\_site\_specific} that generalizes existing the \texttt{GTR} class.
 Since these classes have an almost identical interface and can be used interchangeably in other analysis run by TreeTime.
 Using the new class, TreeTime can generate sequences with site-specific evolutionary models and infer these models from sequence data using the algorithms above.
+In the future, this could extended to also allow site specific $W_{ij}$ but this is not implemented as of now.
 
 
 \subsection*{Generation of simulated data}
 To generate models and sequence ensembles for which the ground truth is known, we sampled binary trees with $n=100, 300, 1000, 3000$ leaves and Yule tree branch length statistics using \href{https://github.com/neherlab/betatree}{betatree} \citep{neher2013coalescence} for values of the average substitution rate given by $\langle \mu\rangle = [0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.5]$.
 
+Given these tree, we generated multiple sets of sequences of length $L=1000$ for each tip of the tree.
+Specifically, we explored the effect of model choice and realization of the evolutionary process by generating data sets as follows:
 For each tree, we sampled two site-specific models for sequences of length $L=1000$ from following distribution:
 Site-specific rates $\mu^a$ were sampled iid from a Gamma distribution with parameter $\alpha=1.5$ or $3.0$.
 Site-specific preferences $\eqp_i^a$ (or equilibrium probabilities) were sampled from Dirichlet distributions with parameters $\alpha=1$ for alphabets with $q=4$ states (nucleotides) or $\alpha=0.2$ and $\alpha=0.5$ for alphabets with $q=20$ (amino acids).
@@ -481,7 +483,7 @@ For each combination of tree and model, two sets of sequences were evolved using
 
 In total, this amounts to 80 alignments for each of the data set sizes $n=100,300,1000,3000$ and four different ensembles.
 For each alignment, we reconstructed phylogenetic trees using IQ-tree \citep{nguyen_iq-tree:_2015} with a GTR+R10 model or FastTree \citep{FastTree} using the default 20 category model for nucleotide and amino-acid sequences, respectively.
-These trees were used to infer site-specific models from data, see below.
+These trees were used to infer site-specific models from data using TreeTime, see below.
 The exact workflow is documented in the script \texttt{src/generate\_toy\_data.py} in the associated git repository at \href{https://github.com/neherlab/2019_Puller_SiteSpecificGTR}{github.org/neherlab/2019\_Puller\_SiteSpecificGTR}.
 
 \subsection*{Model inference from simulated data}
