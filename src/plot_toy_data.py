@@ -66,16 +66,20 @@ def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
     cols = {n:'C%d'%i for i,n in enumerate(subsets['n'])}
 
     mean_vals = make_means(data, subsets)
+    lines = []
+    dash_legend = []
     for params, d in mean_vals.items():
         tmp_p = {k:v for k,v in params}
         subs_per_site = d['mean'].index*tmp_p['n']
-        plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
-                     label=labels[tmp_p['method']] if tmp_p['n']==np.max(subsets['n']) else '',
+        l = plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
                      c=colors[tmp_p['method']], ls=ls[tmp_p['n']])
+        if tmp_p['n']==np.max(subsets['n']):
+            lines.append([l, labels[tmp_p['method']]])
 
         if tmp_p['method']=='naive':
-            plt.text(subs_per_site[0], d['mean']['chisq_p'].iloc[0]*1.2,
-                    f"n={tmp_p['n']}", fontsize=fs*0.8)
+            dash_legend.append(l, f"n={tmp_p['n']}")
+            # plt.text(subs_per_site[0], d['mean']['chisq_p'].iloc[0]*1.2,
+            #         f"n={tmp_p['n']}", fontsize=fs*0.8)
 
     if not (data_secondary is None):
         mean_vals_secondary = make_means(data_secondary, subsets)
@@ -86,11 +90,13 @@ def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
                          label='', c="#AAAAAA", ls=ls[tmp_p['n']])
 
 
-    plt.plot([10,1000], [0.1,0.001], label=r'$\sim x^{-1}$', c='k')
+    l = plt.plot([10,1000], [0.1,0.001]) #, label=r'$\sim x^{-1}$', c='k')
+    lines.append([l,r'$\sim x^{-1}$', c='k'])
     plt.ylim([0.001, 1.6])
     plt.yscale('log')
     plt.xscale('log')
-    plt.legend(fontsize=fs)
+    plt.legend([x[0] for x in lines], [x[1] for x in lines], loc=3, fontsize=fs)
+    plt.legend([x[0] for x in dash_legend], [x[1] for x in dash_legend], loc='center left', fontsize=fs)
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('average number of substitutions per site', fontsize=fs)
     plt.ylabel('squared deviation of $p_i^a$', fontsize=fs)
