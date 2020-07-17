@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import pearsonr, spearmanr
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from treetime.treeanc import TreeAnc
 from treetime.gtr_site_specific import GTR_site_specific
@@ -107,11 +108,11 @@ if __name__ == '__main__':
     div_rec = diversity(gtr.Pi)
     cc_rec = ccoef(np.log(fabio_fitness['median'])[valid], np.log(1e-10+div_rec)[valid])
     plt.figure()
-    g = sns.jointplot(fabio_fitness['median'], div_rec, kind=hex, )
-    g.ax_joint.set_yscale('log')
-    g.ax_joint.set_xscale('log')
-    g.ax_joint.set_xlim([3e-5, 3e0])
-    g.ax_joint.set_ylim([3e-5, 1.5])
+    g = plt.hexbin(fabio_fitness['median'], div_rec, xscale='log', yscale='log')
+#    g.ax_joint.set_yscale('log')
+#    g.ax_joint.set_xscale('log')
+#    g.ax_joint.set_xlim([3e-5, 3e0])
+#    g.ax_joint.set_ylim([3e-5, 1.5])
 
     # plt.scatter(fabio_fitness['median'], div_rec, label='reconstructed, r2=%1.2f'%cc_rec[0]**2)
     # plt.legend()
@@ -133,15 +134,17 @@ if __name__ == '__main__':
 
     plt.figure()
     cc_fit = ccoef(np.log(fabio_fitness['median'][valid]), np.log(1e-10+fitness_estimates_gtr)[valid])
-    plt.scatter(fabio_fitness['median'], fitness_estimates_gtr, label=r'$r^2=$'+'%1.2f'%cc_fit[0]**2)
-    plt.legend(fontsize=fs)
+    #plt.scatter(fabio_fitness['median'], fitness_estimates_gtr, label=r'$r^2=$'+'%1.2f'%cc_fit[0]**2)
+    #plt.legend(fontsize=fs)
+    plt.hexbin(fabio_fitness['median'], fitness_estimates_gtr, xscale='log', yscale='log', gridsize=16, mincnt=1, vmin=1, vmax=75)
     plt.xlim([3e-5, 3e0])
     plt.ylim([3e-2, 3e3])
+    plt.text(5e-5, 1e3, r'$r^2=$'+'%1.2f'%cc_fit[0]**2, fontsize=fs)
     plt.title('B: amino acids' if args.aa else 'A: nucleotides',fontsize=fs*1.2)
     plt.xlabel('intra-host fitness cost estimates', fontsize=fs)
     plt.ylabel(r'GTR based fitness estimates $\Gamma_{in}/\Gamma_{out}$', fontsize=fs)
-    plt.xscale('log')
-    plt.yscale('log')
+    #plt.xscale('log')
+    #plt.yscale('log')
     plt.tick_params(labelsize=0.8*fs)
     plt.tight_layout()
     plt.savefig('figures/'+args.prefix.split('/')[-1]+'_fitness_pc_%1.3f'%args.pc+ ('_aa' if args.aa else '')+'.pdf')
