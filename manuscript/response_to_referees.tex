@@ -38,7 +38,11 @@
 
 \refa{- For the simulations, the author draw site-specific preferences from a Dirichlet distribution with $\alpha$ equal to 0.2 or 0.5. It would be nice to present a more interpretable value of the preferences as well, such as entropy or effective number.}
 
-\Richard{Probably easiest to sample these. }
+\response{
+Thank you for this suggestion.
+For amino acid alphabets, $\alpha=0.2$ and $\alpha=0.5$ correspond to an average entropy of $1.8$ or $2.3$ (in natural log units), respectively.
+Calculating the effective number of states as $\left(\sum_i p_i^2\right)^{-1}$ yields 4.7 or 7.8 effective states.
+We added this to the manuscript.}
 
 
 \refa{- Fig 5 and Fig S4 are both over-plotted and making the points transparent or adding histograms would help with interpretability. In Fig 1, the differences in linetype should be included in the legend. In Fig 2, it would be easier to keep the models straight if the lines were annotated on the graph directly instead of relying exclusively on color.}
@@ -51,7 +55,7 @@
 
 \refb{Abstract, line 19: I would phrase this more carefully, as I personally feel that site-specific substitution models are in fact quite popular (with indeed their own site-specific evolutionary rate being assigned/assumed as well) and easy to set up in many inference packages.}
 
-\response{Thank you for this note. We changed this to refer to 'analyses' rather than 'software'. In our experience, most uses do not account for this, either because of computational complexity or lack of data. }
+\response{Thank you for this note. We changed this to refer to 'analyses' rather than 'software'. In our experience, most users do not account for this, either because of computational complexity or lack of data. }
 
 \refb{Abstract, line 21: It needs to be pointed out that a careful model selection strategy should already be part of a standard phylogenetic/phylodynamic data analysis, where indeed site-specific models are being included in the mix. That’s certainly how I do things, but then I don’t see what would be different with what the authors present here (more to be uncovered as I read through the manuscript obviously, but would be good to point out how the suggested approach will differ from such a model selection study).}
 

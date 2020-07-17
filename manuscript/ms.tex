@@ -476,6 +476,7 @@ Specifically, we explored the effect of model choice and realization of the evol
 For each tree, we sampled two site-specific models for sequences of length $L=1000$ from following distribution:
 Site-specific rates $\mu^a$ were sampled iid from a Gamma distribution with parameter $\alpha=1.5$ or $3.0$.
 Site-specific preferences $\eqp_i^a$ (or equilibrium probabilities) were sampled from Dirichlet distributions with parameters $\alpha=1$ for alphabets with $q=4$ states (nucleotides) or $\alpha=0.2$ and $\alpha=0.5$ for alphabets with $q=20$ (amino acids).
+These distributions correspond to an average number of effective states of $N_{eff} = 2.6$ (nucleotides) and $4.7$ or $7.8$ (amino acids), where the number of effective states is given as $\left(\sum_i (\eqp_i^a)^2\right)^{-1}$.
 The entries of the transition matrix $W_{ij}$ were sampled from a Dirichlet distribution with $\alpha=2$.
 The average substitution rate of these models was fixed to the required $\langle \mu\rangle$.
 In addition, we generated one set of models ($q=4$) with rate variation but uniform $\eqp_i^a$ and $W_{ij}$.
