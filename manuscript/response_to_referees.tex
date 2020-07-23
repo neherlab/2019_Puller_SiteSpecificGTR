@@ -35,6 +35,11 @@
 \refa{- The authors mention that other methods to infer site-specific parameters do exist. How does their new algorithm compare in terms of speed or accuracy?}
 
 \Richard{ask Sarah}
+\response{we have attempted to compare our results with
+\texttt{swmutsel}. However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time,
+swmutsel takes hours where the site specific inference by treetime takes minutes.
+But we are afraid the results are not immediately comparable. }
+
 
 \refa{- For the simulations, the author draw site-specific preferences from a Dirichlet distribution with $\alpha$ equal to 0.2 or 0.5. It would be nice to present a more interpretable value of the preferences as well, such as entropy or effective number.}
 
@@ -47,7 +52,14 @@ We added this to the manuscript.}
 
 \refa{- Fig 5 and Fig S4 are both over-plotted and making the points transparent or adding histograms would help with interpretability. In Fig 1, the differences in linetype should be included in the legend. In Fig 2, it would be easier to keep the models straight if the lines were annotated on the graph directly instead of relying exclusively on color.}
 
-\Richard{maybe use hex-grids for Fig 5. add additional legend to Fig 1, think about Fig 2 }
+\response{
+We are grateful for these suggestions to improve the figures:
+\begin{itemize}
+    \item we changed Fig 5 and Fig S4 to two dimensional histograms
+    \item we added second legend to figure 1 that maps line style to samples size
+    \item labeling individual lines in Fig 2 proved a bit tricky, but we added markers to the lines such they can be distinguished without reference to color.
+\end{itemize}
+}
 
 
 \subsection*{Reviewer: 2}
@@ -55,9 +67,18 @@ We added this to the manuscript.}
 
 \refb{Abstract, line 19: I would phrase this more carefully, as I personally feel that site-specific substitution models are in fact quite popular (with indeed their own site-specific evolutionary rate being assigned/assumed as well) and easy to set up in many inference packages.}
 
-\response{Thank you for this note. We changed this to refer to 'analyses' rather than 'software'. In our experience, most users do not account for this, either because of computational complexity or lack of data. }
+\response{Thank you for this note. We realized that the intention and model class studied in our manuscript wasn't clear enough. We now emphasize that we study whether models with different state preferences at every site can be accurately estimated.
+
+We now point out in the abstract that site heterogenous models with partitions are a common way to include biological complexity and that model selection has to be used to determine model complexity.
+ }
 
 \refb{Abstract, line 21: It needs to be pointed out that a careful model selection strategy should already be part of a standard phylogenetic/phylodynamic data analysis, where indeed site-specific models are being included in the mix. That’s certainly how I do things, but then I don’t see what would be different with what the authors present here (more to be uncovered as I read through the manuscript obviously, but would be good to point out how the suggested approach will differ from such a model selection study).}
+
+\response{
+We now point out our objective more clearly: Our primary goal is to infer site specific preferences to learn about the selection pressures operating on the genome, not phylogenetic inference.
+Specifically, we ask how much data is required to estimate state preferences at every site, how uncertainty in topology affects the estimates, and which aspects of the model are well or poorly constraint.
+As such, the problem is distinct (but related) to a model selection problem.
+}
 
 \refb{Abstract, line 22: why ‘approximate’? How does this differ from ‘regular’ ML?}
 
@@ -65,17 +86,29 @@ We added this to the manuscript.}
 
 \refb{Abstract, lines 24-25: I assume it will be pointed out that the BEAST/BEAST2 packages do allow for site-specific models to be used (with for example a simple button that allows to select the SRD06 model, of which the paper should be cited)?}
 
-\response{To our knowledge, these are are partition models for different positions in a codon rather than models that allow independent frequencies at each position. We discuss these more carefully in the main text.}
+\response{We discuss site-heterogenous partition models carefully in the main text.}
 
 
 \refb{Lines 120-122: This brings to mind a recent paper by Gascuel and Steel ‘A Darwinian Uncertainty Principle’ in which the issue of jointly estimating the ancestral states and the transitions of those states is investigated. Given the parameters the authors are interested in here and their assessment through simulations, it seems to me that the authors need to clarify the novelty of their investigations and how theirs sets them apart from those investigated by Gascuel and Steel (actually Figure 1 reminds me of Figure 2 in the paper by Gascuel and Steel).}
 
-\response{The paper by Gascuel and Steel (which we were unaware of) discusses indeed similar topics as we do. Gascuel and Steel are mostly concerned with reconstruction of a single character where the entire rate matrix needs to be estimated, while we investigate sequence evolution where site-specific parameters are restricted to frequencies and rates. }
+\response{The paper by Gascuel and Steel (which we were unaware of) discusses indeed similar topics as we do. Gascuel and Steel investigate whether the state of the root if a character can be inferred jointly with the equilibrium probabilities or the transition matrix. Consistent with our results, they find that this is possible for Yule trees.
+Here, we are mmostly concerned with estimating the model, not the root state.
+We also consider sequence evolution rather than the evolution of a single character.
+This allows us to investigate the extent to which branch lengths can be estimated along with the model.
+
+We now discuss our results in the light of the results by Gascuel and Steel and thank the reviewer for pointing out this work to us.
+}
 
 \refb{Line 141: True, and this deserves a lot more explanation in the manuscript, i.e. how far should one typically push the site-specific assumptions? The authors need to make it explicitly clear if they plan to estimate (and assess) one or more site-specific parameters for each site, or whether some of these parameters are shared across categories of sites as is most commonly done when dealing with data partitions (such as partitioning by codon position). If each site gets its own parameter(s), then overfitting seems to be a very real issue; but what about other cases such as pre-defined partitions? Or what about drawing certain parameters from a certain distribution or a hierarchical phylogenetic model, which could very much aid with overfitting issues by sharing data?}
 
-\response{We indeed investigate models with multiple free parameters per site -- in contrast to category models. Much of the remainder of the manuscript is devoted to the issue of identifiablility and over-fitting. }
-\Richard{Come back with specific fixes.}
+\response{We indeed investigate models with multiple free parameters per site -- in contrast to category models.
+In our model the symmetric substitution matrix is shared across sites, but each site has has its own rate and frequencies.
+Much of the remainder of the manuscript is devoted to the issue of identifiablility and over-fitting.
+As data sets grow in size, such site specific parameters become increasingly identifiable and this is focus of this study.
+The properties of category models have for example been studied systematically by Kainer and Lanfear.
+
+We now point out the risk of overfitting more clearly at the beginning of the section ``Accuracy of the inferences'' and emphasize that this is one of the research questions we want to address: How much data do you need to estimate such parameters?
+}
 
 
 \refb{Line 150: `data sets'}
@@ -85,15 +118,34 @@ We added this to the manuscript.}
 \response{fixed, thanks.}
 
 \refb{Lines 204-208: Again, this seems related to Gascuel and Steel.}
-\response{Indeed, Gascuel and Steel show a similar graph for a single character reconstruction using different models. We now point out this analogy.}
-\Richard{TODO}
+
+\response{Indeed, Gascuel and Steel show a similar graph for the joint estimation of ancestral state of a single discrete character and the model of its evolution. We now point out this analogy.
+
+The connection to Gascuel and Steel is particularly apt when discussion the inability to jointly infer the ancestral state and the model.
+We also draw attention to the fact that accurate model estimation is possible for know trees, consistent with the results by G\&S that estimation is possible for Yule trees.
+}
 
 \refb{In my opinion, the ‘Accuracy of inferences’ section is hard to digest, mostly because of its technicality and -- in my personal opinion -- due to the fact that the figures (specifically figures 1 and 2) aren’t very intuitive so I would suggest the authors to rework both the use of the Y-axis (if the authors want to discuss accuracy in the text, then the graphs should be going up in the figures as well), as well as the legends within the figures, which also aren’t self-explanatory and require to go through the text in detail.}
 
+\response{We have rewritten a good part of this section. We now point out that we first investigate the performance of the inference scheme with known tree and ancestral states and then investigate the feasibility of estimating tree, ancestral states, and model together.
+
+Reviewer 1 also had suggestions to improve the figures and we have added more information to the legends and made it easier to differentiate between different line.
+We adjusted to text to more explicitly point out that the graphs show squared error, i.e., a quantity that decreases with increasing accuracy.
+}
 
 \refb{Lines 239-240: I’m not particularly convinced that uniform frequencies are still the norm ...}
 
+\response{We are not making a statement here on what is the norm and we are aware that complex models with multiple partitions are common. However, many large phylogenetic analysis of viruses use models that account for rate heterogeneity among sites, but use a common matrix of relative substitution rates for all site (PMID 25278604 for example). }
+
 \refb{Line 308: I fear this example analysis is quite (or too) technical and am not sure this will appeal to typical readers of Virus Evolution. Overall, the manuscript would be more suited for a more methodological journal like Systematic Biology or Bioinformatics.}
+
+\response{We have made an effort to make this section more accessible, but we think it is an important part of the manuscript and one of the reasons we think Virus Evolution is an appropriate journal.
+This section explores the ability to estimate site specific preferences from large and diverse alignments of RNA viruses.
+Similar analysis could be done for other RNA viruses.
+Furthermore, it points out implications for phylogenetic inferences.
+We don't have solutions for the latter, but feel that it is still important to point them out.
+}
+
 
 \response{We have made an effort to simplify and clarify this example. But we feel that the application of to HIV data is one aspect of what makes this paper suitable for Virus Evolution: Diverse viruses like HIV are one place were data to apply such methods are available and the interpretation of conservation and viral fitness is of interest to many readers of Virus Evolution. }
 
@@ -109,7 +161,12 @@ We added this to the manuscript.}
 
 \refb{The manuscript deals with estimates (i.e. trees) that were obtained using IQ-TREE and FastTree (which produce unrooted trees and don’t employ the concept of a molecular clock), which were subsequently fed into TreeTime which employs the provided trees as is. This makes me wonder if the conclusions from the manuscript hold up in frameworks that i) employ a molecular clock directly in their estimations, and ii) do not employ a fixed topology but rather explore a distribution of trees as typically done in Bayesian phylogenetic inference. I’m not suggesting the authors do the same experiments in a Bayesian framework but their take on this could be interesting for the discussion section.}
 
-\Richard{We are not dealing with time scaled trees here. We only use treetime to estimate branch lengths using specific models and estimate models from data.}
+\response{
+We are afraid there is a misunderstanding here.
+This manuscript deals with GTR models and the root doesn't matter.
+We only use root-to-tip distances in mid-point-rooted trees as a measure of divergence.
+The only place where time comes in are the HIV examples, but we only use time as a proxy for evolutionary rate and don't do any molecular clock analysis.
+All we want to do is to point out that branch length under-estimation potentially has consequences for dating rapidly evolving RNA viruses.}
 
 
 \refb{Lines 651-653: I’m going to assume that most readers, like myself, will not be very familiar with the work of Halpern and Bruno (1998). Hence these sentences will need to provide more information regarding the following statement: ‘only allow for site-specific rates and equilibrium frequencies while using the same transition matrix for every site.’ Regarding the site-specific (evolutionary) rates, there may be confusion as to whether the process meant is actually among-site rate variation (typically modelled as a discretized gamma distribution according to various paper of Ziheng Yang), or relative rates between positions which can be superimposed on the former model. I’m going to assume the latter, but in that case it’s not clear whether for each site a unique rate will be estimated (if so, that’s a lot of additional parameters and this needs to be discussed) or whether classes of sites will be imposed (the three different codon positions for example) and that for only each of these classes a unique rate will be estimated? Essentially, I have the same question regarding the equilibrium frequencies, as it’s not clear from the methods section (but I can guess from the simulated data section; still, the authors should be more explicit here).}
