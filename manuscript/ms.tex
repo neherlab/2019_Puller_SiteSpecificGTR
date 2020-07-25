@@ -47,11 +47,11 @@ $^{3}$Max Planck Institute for Developmental Biology, 72076 T\"ubingen, Germany}
 \begin{abstract}
 Abstract: Natural selection imposes a complex filter on which variants persist in a population resulting in evolutionary patterns that vary greatly along the genome.
 Some sites evolve close to neutrally, while others are highly conserved, allow only specific states or only change in concert with other sites.
-Modeling this complexity, however, requires an extensive number or parameters that can not be infered from small data sets and are costly to infer from large data sets.
-Most commonly used evolutionary models therefore reduce this complexity by partitioning sites into discrete classes with different rates and/or preferences where appropriate complexity is determined by model selection procedures.
+One one hand, such constraints on sequence evolution are used to infer biological function, one the other hand they need to be accounted for in phylogenetic reconstruction.
+Most commonly used evolutionary models try to account for this complexity by partitioning sites into a small number of discrete classes with different rates and/or preferences where appropriate complexity is determined by model selection procedures.
 Here, we present an efficient algorithm to estimate more complex models that allow for different preferences at every site and explore the accuracy at which such models can be estimated from simulated data.
-We find that an iterative approximate maximum likelihood scheme uses information in the data efficiently and accurately estimates site-specific preferences from large data sets with moderately diverged sequences and known topology.
-Ignoring site-specific preferences during estimation of branch length of phylogenetic trees -- an assumption of most phylogenetic analyses -- results in substantial underestimation comparable to the error incurred when ignoring rate variation.
+Our iterative approximate maximum likelihood scheme uses information in the data efficiently and accurately estimates site-specific preferences from large data sets with moderately diverged sequences and known topology.
+We further explore the importance of site-specific preferences during estimation of branch length of phylogenetic trees and show that ignoring site-specific preferences results in substantial underestimation comparable to the error incurred when ignoring rate variation.
 However, the joint estimation of branch lengths, site-specific rates, and site-specific preferences can suffer from identifiability problems and is typically unable to recover the correct branch lengths.
 Site-specific preferences estimated from large HIV \emph{pol} alignments show qualitative concordance with intra-host estimates of fitness costs.
 Analysis of site-specific HIV substitution models suggests near saturation of divergence after a few hundred years.
@@ -64,7 +64,7 @@ Such saturation can explain the inability to infer deep divergence times of HIV 
 Over time, genome sequences change through mutations and are reshuffled by recombination.
 Modifications to the genomes are filtered by selection for survival such that beneficial variants spread preferentially and those that impair function are purged.
 As a result, some parts of genomes change rapidly, while other are strongly conserved.
-In addition to variation of the evolutionary rate, different sites in a genome only explore different subsets of the available states.
+In addition to variation of the evolutionary rate, different sites in a genome explore different subsets of the available states.
 Some positions in a protein, for example, might only allow for hydrophobic amino acids, while others require acidic side chains.
 Patterns of conservation and variation, possibly involving more than one site, are therefore shaped by functional constraints which in turn allows inference of biological function from genetic variation.
 
@@ -75,13 +75,12 @@ Inferring phylogenies is a computationally challenging problem since the number 
 Due to this computational complexity, the most commonly used substitution models are simple caricatures of biological complexity.
 The simplest substitution models assume that all sites and sequence states are equivalent and evolve at the same rate, i.e., they assume an unconstrained non-functional sequence that mutates at random between the different sequence states.
 Such simple models are clearly inadequate and ignoring rate heterogeneity tends to result in biased estimates of divergence times or otherwise erroneous results \citep{yang1996among}.
-Most commonly used models account for variation in substitution rates among sites and average properties of the substitution process such as transition/transversion bias or more likely substitution between similar amino acids \citep{yang_maximum_1994,FastTree2,nguyen_iq-tree:_2015,stamatakis_raxml_2014}.
+Most commonly used models account for variation in substitution rates among sites and average properties of the substitution process such as transition/transversion bias or more frequent substitution between similar amino acids \citep{yang_maximum_1994,FastTree2,nguyen_iq-tree:_2015,stamatakis_raxml_2014}.
 To avoid over-fitting, these methods typically don't estimate a rate for each site, but treat site-specific rates as random effects that are integrated out (often using discrete approximations of a Gamma distribution \citep{yang1996among}, mixture of multiple unimodal distributions \citep{mayrose2005gamma}, or a small number of fixed rates).
 
 
-In addition to rate variation, different sites in a protein differ in the amino acids they allow and constraints on the DNA or RNA sequence impose additional levels of selection.
+In addition to rate variation, different sites in a protein differ in the amino acids they allow, and constraints on the DNA or RNA sequence impose additional levels of selection.
 Such variation can again be accounted for by modeling multiple categories with different preferences for amino acids or nucleotides to which sites can be assigned or which can be integrated out during phylogenetic inference \citep{Lartillot01062004,kainer_effects_2015,shapiro_choosing_2006}.
-Here, we ask study under what circumstances models that allow different state frequencies at every site in the alignment can be estimated and what implications such variation has for phylogenetic inference.
 
 Recent deep mutational scanning experiments have shown that site-specific preferences are mostly conserved between moderately diverged proteins \citep{doud_site-specific_2015}.
 Using such experimentally inferred site-specific models in phylogenetic inference greatly increases the likelihood of the data \cite{bloom2014experimentally}.
@@ -89,6 +88,7 @@ More than two decades ago, \citet{halpern_evolutionary_1998} pointed out that ig
 \citet{hilton_modeling_2018} recently showed that experimentally measured preference not only improve the phylogenetic fit, but also results in longer branch length estimates.
 Models with site-specific preferences are also known as mutation-selection balance models \citep{bruno1996modeling,yang2008mutation} reflecting the intuition that equilibrium frequencies are determined by competition of diversifying processes (like mutation) and selection for an optimal function.
 
+Instead of partitioning the sequence into a small number of categories, we ask under what circumstances it is possible to estimate models that allow different state frequencies at every site in the alignment and what implications such variation has for phylogenetic inference.
 While biologically plausible, estimating such models from data exacerbates the over-fitting problem and it rarely attempted in practice.
 In the context of the site-specific models this issue has become known as {\em extensive parametrization} or even {\em infinitely many parameters problem} \cite{Rodrigue557,spielman2016extensively}.
 With sufficient data, however, site-specific parameters can be accurately estimated \citep{tamuri_estimating_2012,spielman2016extensively,scheffler2014validity}.
@@ -100,8 +100,8 @@ We apply this algorithm to large HIV-1 alignments and explore the consequences f
 	\includegraphics[width=0.48\textwidth]{{../figures/p_dist_vs_treelength_nuc_ratealpha1.5}.pdf}
 	%\includegraphics[width=0.32\textwidth]{../figures/avg_rate_dressed.pdf}
 	\includegraphics[width=0.48\textwidth]{{../figures/rate_correlation_dressed_nuc_ratealpha1.5}.pdf}
-	\caption{{\bf Accuracy of iterative estimation of site-specific GTR models as a function of the expected number of state changes along the tree.} (A) Mean squared error of the inferred $\eqp_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the Poisson statistics of observable mutations. Colored lines correspond to data generated assuming Gamma distributed rate variation with $\alpha=1.5$, gray lines with $\alpha=3$.
-	The estimates are more accurate than naive estimates from the state frequencies in alignment columns. The advantage over naive estimates increases with data set size as seen from different curves with $n\in [100,300,1000,3000]$ sequences per tree.
+	\caption{{\bf Accuracy of iterative estimation of site-specific GTR models as a function of the expected number of state changes along the tree.} (A) Mean squared error of the inferred $\hat{\eqp}_i^a$ scales inversely with the tree length, suggesting the accuracy is limited by the Poisson statistics of observable mutations.
+    This scaling holds for different number of sequences per tree ($n\in [100,300,1000,3000]$) and different degrees of rate variation.
 	(B) The relative substitution rates are accurately inferred as soon as the typical site experiences several substitutions across the tree as quantified here as Pearson correlation coefficient between true and inferred rates. Regularization via pseudo-counts reduces over-fitting at low divergence.
 	Analogous results for alphabets of size $q=20$ are shown in Fig.~\ref{fig:dressed_supp}.
 }
@@ -142,9 +142,9 @@ These update rules are an example of non-negative factorization algorithms \cite
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ACCURACY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Accuracy of inferences}
-The validity of this iterative solution will depend (i) on the accuracy of the linear approximation, (ii) the accuracy to which $n_{ij}^a$ and $\tau_{j}^a$ can be estimated, and (iii) the accuracy of the tree reconstruction.
-Furthermore, the estimation of this extensive number of parameters requires large data sets in which most positions mutate multiple times on the tree -- otherwise the model will overfit the data and return inaccurate estimates.
+\section*{Accuracy of model inferences}
+The accuracy of this iterative solution will depend (i) on the validity of the linear approximation, (ii) the accuracy to which $n_{ij}^a$ and $\tau_{j}^a$ can be estimated, and (iii) the accuracy of the tree reconstruction.
+Furthermore, the estimation of this extensive number of parameters requires large data sets in which most positions mutate multiple times on the tree -- otherwise the model will overfit the data and result in inaccurate estimates.
 
 To assess these sources of error and effect of data set sizes independently, we simulated sequences evolving along trees and explicitly recorded the number of transitions between states at every site ($n_{ij}^a$) and the time spent in each state ($\tau_j^a$) for a range of sample sizes, levels of divergence, and models with different degrees of variation between sites, see Materials and Methods.
 % For each parameter set, we generated two random Yule trees, for each tree generated two random site-specific models, and for each tree/model pair two alignments, resulting in a total of eight data sets per parameter combination.
@@ -158,6 +158,7 @@ Lower $\chi^2$ corresponds to more accurate estimates.
 	\includegraphics[width=0.48\textwidth]{{../figures/p_dist_vs_rtt_aa_ratealpha1.5}.pdf}
 	\caption{{\bf Quantification of errors stemming from tree inference and ancestral reconstruction.}
 	Panels A and B show the mean-squared deviation $\chi^2$ of inferred $\hat{\eqp}_i^a$ from the true $\eqp_i^a$ for 4-letter and 20-letter alphabets, respectively.
+    Alignment frequencies are poor estimates of the $\eqp_i^a$ even in very diverse samples, while the different phylogeny aware methods initially improve rapidly with root-to-tip distance.
 	At large root-to-tip distances, ancestral reconstruction becomes less and less certain and estimation of $\eqp_i^a$ fails (red lines).
 	These errors are gradually eliminated by first summing over ancestral uncertainty (violet), iteratively redoing ancestral reconstruction using the inferred model (brown), and re-optimizing branch lengths using the updated models (or using the true tree, yellow/pink).
 	Data in this figure uses was generated assuming Gamma distributed rate variation with $\alpha=1.5$.
@@ -167,15 +168,14 @@ Lower $\chi^2$ corresponds to more accurate estimates.
 
 
 In our first analysis summarized in Fig.~\ref{fig:dressed} we quantify the accuracy at which $\eqp_i^a$ and $\mu^a$ can be estimated if ancestral sequences are known.
-As expected, the average squared error $\chi^2$ of the $\eqp_i^a$ decreases with the substitution rate and the size of the data set.
+As expected, the average squared error $\chi^2$ decreases with the substitution rate and the size of the data set.
 The error is well predicted by the average number of substitutions per site, which increases both with data set size and with the substitution rate.
 The data in Fig.~\ref{fig:dressed}A are shown on double logarithmic scales, such that the approximately straight decrease of $\chi^2$ with slope -1 implies that the squared deviation is inversely proportional to the expected number of substitutions.
 This scaling suggests that accuracy is limited by the inherent stochasticity of the evolutionary process and that the inference uses all available information efficiently.
-In contrast, using the frequencies of different sequence states in the alignment as estimates for $\eqp_i^a$ is much less accurate due to the correlation induced by shared ancestry (orange lines in Fig.~\ref{fig:dressed}A).
 
 The simulation data were generated by drawing site-specific rates from a Gamma distribution with $\alpha=1.5$ (colored lines) and $\alpha=3$ (grey lines).
-The scaling behavior $\chi_2 (\textrm{tree length})^{-1}$ is more evident for $\alpha=3$ than for $\alpha=1.5$.
-In case of strong rate variation, the average accuracy is dominated by a small number of sites with low rates at which frequencies are estimated poorly and the average tree length does not capture behavior at these sites.
+The scaling behavior $\chi_2 \sim (\textrm{tree length})^{-1}$ is more evident for $\alpha=3$ than for $\alpha=1.5$.
+In the latter case of strong rate variation, the average accuracy is dominated by a small number of sites with low rates at which frequencies are estimated poorly and the average tree length does not capture behavior at these sites.
 
 At the largest substitution rates, branch lengths are on the order of 0.5 and the linear approximation underlying the iterative equations is not longer accurate.
 Nevertheless, the accuracy of the $\hat{\eqp}_i^a$ continues to increase.
@@ -189,7 +189,7 @@ Above, we investigated the accuracy of model inferences when the ancestral state
 In practice, however, ancestral sequences are unknown and need to be inferred or summed over (marginalized) which will introduce additional uncertainty.
 This problem was recently described as the ``Darwinian uncertainty principle'' by \citet{gascuel_darwinian_2020} showing that there are fundamental limits to the accuracy at which  model and ancestral states can be estimated jointly.
 
-To test the influence of tree and ancestral state reconstruction, we reconstructed phylogenetic trees using IQ-tree \citep{nguyen_iq-tree:_2015} with a GTR+R10 model (simulated nucleotide sequences) or FastTree \citep{FastTree} using the default 20 category (simulated amino-acid sequences).
+To test the influence of tree and ancestral state reconstruction, we reconstructed phylogenetic trees using IQ-tree \citep{nguyen_iq-tree:_2015} with a GTR+R10 model (simulated nucleotide sequences) or FastTree \citep{FastTree} using the default settings (simulated amino-acid sequences).
 Fig~\ref{fig:reconstructed} compares different schemes to reconstruct ancestral sequences, infer substitution models, and optimize the tree.
 The simplest approach is to take the inferred tree as given, reconstruct the ancestral states using a simple evolutionary model (e.g.~Jukes-Cantor model) and calculate $n^a_{ij}$ and $\tau_i^a$ from this reconstruction.
 This naive approach works well up to root-to-tip distances of about 0.3, beyond which estimates deteriorate, see Fig~\ref{fig:reconstructed} (``Reconstructed ancestral sequences'', red line).
@@ -202,10 +202,12 @@ At this level of divergence, tree reconstruction starts becoming problematic and
 Using the true tree instead of the reconstructed tree leads to continuous improvements of accuracy with increasing levels of divergence (yellow line).
 Similar improvements are achieved by optimizing tree branch lengths along with the model.
 These improvements are consistent with \citet{gascuel_darwinian_2020} in that joint estimation of ancestral states and model is possible for Yule trees in which tree length grows linearly with the number of tips while tree depth increases only logarithmically.
+In contrast, using the frequencies of different sequence states in the alignment as estimates for $\eqp_i^a$ is much less accurate due to the correlation induced by shared ancestry (orange lines in Fig.~\ref{fig:dressed}A).
 
 We found qualitatively similar patterns for 4-letter and 20-letter alphabets in the overall accuracy of the estimated model and its dependence on the different approximations, compare Fig.~\ref{fig:reconstructed}A\&B.
 For larger alphabets, the breakdown at large root-to-tip distances is less dramatic and sets in at larger values.
-However, these difference depend on the skew of the equilibrium probabilities.
+Overall, we conclude that site specific frequencies can be estimated accurately when the overall tree length comfortably exceeds 10 such that most sites experienced multiple mutations.
+
 
 \subsection*{Ignoring site-specific frequencies results in branch length underestimates}
 As previously observed by various authors \citep{halpern_evolutionary_1998,hilton_modeling_2018}, sites with heavily skewed preferences for specific states result in underestimation of branch lengths if uniform equilibrium frequencies are assumed.
