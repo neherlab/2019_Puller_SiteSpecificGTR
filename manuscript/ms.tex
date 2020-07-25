@@ -209,9 +209,9 @@ For larger alphabets, the breakdown at large root-to-tip distances is less drama
 Overall, we conclude that site specific frequencies can be estimated accurately when the overall tree length comfortably exceeds 10 such that most sites experienced multiple mutations.
 
 
-\subsection*{Ignoring site-specific frequencies results in branch length underestimates}
+\subsection*{Implications for branch length estimates in phylogenies}
 As previously observed by various authors \citep{halpern_evolutionary_1998,hilton_modeling_2018}, sites with heavily skewed preferences for specific states result in underestimation of branch lengths if uniform equilibrium frequencies are assumed.
-This is a straightforward consequence of the fact that the probability of observing the same state at random is $\sum_i{\eqp_i^a}^2$ is increasing sharply with more peaked preferences.
+This is a straightforward consequence of the fact that the probability of observing the same state at random is $\sum_i{(\eqp_i^a)}^2$, which is increasing sharply with more peaked preferences.
 Models that don't account for site-specific frequencies will take a large number of sites that agree between two sequences as evidence for their close evolutionary relationship, while it is simply a consequence of resampling the same states with high probability.
 In other words, this underestimation is the result of incorrect models of saturation and is closely related to the observation that incomplete purifying selection can result in erroneous and apparently time dependent evolutionary rates \citet{wertheim_purifying_2011}.
 
@@ -226,10 +226,10 @@ In other words, this underestimation is the result of incorrect models of satura
 
 
 %% dependence on pseudo count
-Fig.~\ref{fig:tree_length} shows the average branch length (panel A) and the average root-to-tip distance of mid-point rooted trees (panel B) with branch length optimized using (i) the true model, (ii) using the GTR+R10 model of IQ-tree, and (iii) inferred models using different degrees of regularization.
+Fig.~\ref{fig:tree_length} shows the average branch length (panel A) and the average root-to-tip distance of mid-point rooted trees (panel B) with branch lengths optimized using (i) the true model, (ii) using the GTR+R10 model of IQ-tree, and (iii) inferred models using different degrees of regularization.
 While branch lengths are accurately estimated when using the true model, they are systematically underestimated by the GTR+R10 model without site-specific preferences.
-Underestimation is particularly severe for the average root-to-tip distance which is dominated by long branches deep in the phylogenies that are prone to underestimation.
-When ignoring site-specific preferences, the inferred root-to-tip distance is essentially independent from the true value for distances greater than 1 (Fig.~\ref{fig:tree_length}B).
+This problem is particularly severe for the average root-to-tip distance which is dominated by long branches deep in the phylogenies that are prone to underestimation.
+When ignoring site-specific preferences, the inferred root-to-tip distance is essentially flat for distances greater than 1 (Fig.~\ref{fig:tree_length}B).
 This effect is entirely due to skewed equilibrium frequencies, as branch length inference by IQ-tree is accurate if the simulated data had flat $\eqp_i^a=q^{-1}$ with the same rate variation.
 %% dependence on nucleotide and amino acid skew
 The underestimation of branch lengths is less severe for larger alphabets or if frequencies are not heavily skewed, see Fig.~\ref{fig:tree_length_supp}.
@@ -257,7 +257,7 @@ For a mixing fraction $\alpha$, we constructed a model with rates
 \label{eq:mixture_model}
 	\mu^a = \alpha \langle \mu^a\rangle + (1-\alpha) \mu^a_{\mathrm{true}}
 \end{equation}
-where $\langle \mu^a\rangle$ is the expectation value of the rate.
+where $\langle \mu^a\rangle$ is the average of the rate.
 Mixtures of site-specific frequencies are constructed analogously.
 
 Fig.~\ref{fig:model_deviation}A shows how deviation from the true model affect relative branch length estimates.
@@ -270,7 +270,7 @@ Fig.~\ref{fig:model_deviation}B shows the degree of mis-estimation when using fl
 The relative error increases approximately linearly with the average evolutionary rate.
 
 
-\subsection*{Applications to large HIV alignments}
+\section*{Applications to large HIV alignments}
 Since its zoonosis, HIV-1 has diversified into several different subtypes that differ from each other at about 20\% of sites in their genome.
 For each subtype, thousands of sequences are available, which typically differ by about 10\% \citep{LANL}.
 This large sample of moderately diverged sequences should be suited to estimate site-specific preference using the iterative inference frame work and quantify how selection shaped the evolution of HIV.
@@ -294,7 +294,7 @@ The logarithm of this ratio is expected to be proportional to the fitness differ
 
 
 We downloaded alignments of HIV-1 pol sequences from the LANL data base, constructed phylogenetic trees, and inferred site-specific GTR models at the nucleotide and amino acid level, see Materials and Methods.
-We compared $\frac{\Gamma_{in}}{\Gamma_{out}}$ to fitness costs measured using mutation selection balance models and with-in host diversity data of HIV \citep{zanini2017vivo}.
+We compared $2N s_i^a = \log\left(\frac{\Gamma_{in}}{\Gamma_{out}}\right)$ to fitness costs measured using mutation selection balance models and with-in host diversity data of HIV \citep{zanini2017vivo}.
 However, instead of a linear relationship between $s_i^a$ and within host estimates of fitness costs, we observed a linear relationship between the logarithm of fitness effects measured with-in host and $s_i^a$ (see Fig.~\ref{fig:HIV_fitness})
 This relationship explains about half the variance of nucleotide effects and about one third of amino acid effects.
 Interestingly, this correlation between the intra-host estimates and cross-sectional estimates decreased as soon as regularization increased above 0.05 and we therefore used a weak regularization of $\pc=0.01$.
@@ -312,7 +312,7 @@ and instead is approximately
 points towards different process that drive cross-sectional and with-in host diversification.
 While the order of fitness effects with-in host and cross-sectionally seem to be mostly concordant, with-in host variation is much greater than cross-sectional variation.
 Within host fitness effects are masked and damped at the population level, possibly due to fluctuating selection by diverse host immune systems or epistasis \citep{zanini2015population,shekhar_spin_2013}.
-The ratio of in/out rates $e^{-2Ns_i^a}$ is a very good correlate of alignment diversity (see Fig.~\ref{fig:HIV_diversity_supp}).
+The ratio of in/out rates $e^{2Ns_i^a}$ is a very good correlate of alignment diversity (see Fig.~\ref{fig:HIV_diversity_supp}).
 
 \begin{figure*}[tb]
 	\centering
@@ -349,16 +349,17 @@ Furthermore, this analysis suggests very little signal to estimate the length of
 
 \section*{Discussion}
 Different positions in a genome sequence or a protein change at different rates and explore different subsets of the available states.
-These site-specific properties are evolutionary conserved and are the basis of all common homology search tools.
+These site-specific properties are evolutionary conserved and are the basis of common homology search tools.
 Which states are permissible at which position can be measured with high-throughput using deep mutational scanning techniques \citep{fowler_deep_2014} or can be estimated from large alignments of homologous sequences.
 Both approaches can reveal biological function and organization of the entity coded for by the sequence.
 \citet{bruno1996modeling} pointed out that the frequencies of states in columns of an alignment are distorted by phylogenetic correlations and how these phylogenetic correlations can be accounted for.
 However, estimating these frequencies accurately requires large data sets that have only recently become available.
 
 While accurate estimates of site-specific frequencies require correction of phylogenetic correlations, accurate phylogenetic inference requires sufficiently realistic models of sequence evolution while being computationally tractable and easy to parameterize.
-A common compromise is to model rate heterogeneity as random effects, while assuming identical site preferences across the sequence or to allow for a small number of data partitions with different preferences \citep{Lartillot01062004}.
+A common compromise is to model rate heterogeneity as random effects, while assuming identical site preferences across the sequence.
+More complex models allow for a small number of data partitions with different preferences \citep{Lartillot01062004,kainer_effects_2015}.
 
-Here, we presented method to estimate site-specific GTR models using an iterative EM-type approach inspired by \citet{bruno1996modeling}.
+Here, we presented method to estimate site-specific preferences using an iterative EM-type approach inspired by \citet{bruno1996modeling}.
 We showed that site-specific models can be inferred with an accuracy limited by the Poisson statistics of the substitution process using an efficient iterative scheme.
 For short branch lengths a parsimonious ancestral reconstruction is sufficient, while for more diverged samples iterative inference of the model, the ancestral states, and the branch lengths is necessary.
 The computational complexity of the inference is dominated by ancestral reconstruction and branch length optimization, which is quadratic in the alphabet size and linear in sample size and sequence length \citep{felsenstein2004inferring}.
@@ -370,6 +371,7 @@ As has been reported before, branch lengths are underestimated when variation in
 While such underestimation often has a moderate effect on the total length of a tree, it can result in substantial underestimation of root-to-tip distance that are dominated by a few long branches close to the root.
 While using the correct model results in correct branch length estimates, joint inference of site-specific models and branch lengths is typically unable to recover the true branch lengths and substantial underestimation remains.
 This points to parameter identifiability problems rooted in the similar effects that skewed equilibrium frequencies, low rates, and shorter branch length have on the likelihood of the data.
+This problems are distinct from, but related to, the inability to jointly infer ancestral states and rate parameters of evolving discrete states \citep{gascuel_darwinian_2020} as we can marginalize over the ancestral states here.
 
 Branch length estimates using models constructed by mixing the true model and flat Jukes-Cantor type models showed that misspecified equilibrium frequencies result in substantial errors as soon as the model deviates from the true model by 30\% or more.
 This mirrors observations by \citet{hilton_modeling_2018}, who found that preferences measured for influenza HA proteins of type H1 or H3 affect branch length of in the vicinity of the focal sequence, but not globally on the tree.
