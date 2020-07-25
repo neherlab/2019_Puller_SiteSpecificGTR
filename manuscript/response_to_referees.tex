@@ -149,14 +149,27 @@ We don't have solutions for the latter, but feel that it is still important to p
 
 \response{We have made an effort to simplify and clarify this example. But we feel that the application of to HIV data is one aspect of what makes this paper suitable for Virus Evolution: Diverse viruses like HIV are one place were data to apply such methods are available and the interpretation of conservation and viral fitness is of interest to many readers of Virus Evolution. }
 
-\refb{But what I’m missing the most from the results and discussion sections of the manuscript, is clear advice on how to perform analyses on real data, what to look out for and how to potentially remedy the problem. The manuscript is too technical in that regard, and while assessing accuracy problems is important, a step-by-step approach for empirical data sets- to potentially/hopefully mitigate the problems mention in this manuscript - is even more important. It would be most helpful if the authors comment on the typical workflow, i.e. running ModelTest or something similar (PartitionFinder, automatic/included model selection in IQ-TREE, ...) and then sticking with the model found to infer the phylogeny. How often would one get in trouble with such an approach? And if problems arise, how severe are they? Could the clustering potentially be impacted or does the problem stay limited to certain branches (of certain length)? Or is the tree as a whole deemed older/younger than it really is, i.e. does the underestimation propogate through the tree all the way to the root or not?}
+\refb{But what I’m missing the most from the results and discussion sections of the manuscript, is clear advice on how to perform analyses on real data, what to look out for and how to potentially remedy the problem. The manuscript is too technical in that regard, and while assessing accuracy problems is important, a step-by-step approach for empirical data sets- to potentially/hopefully mitigate the problems mention in this manuscript - is even more important. It would be most helpful if the authors comment on the typical workflow, i.e. running ModelTest or something similar (PartitionFinder, automatic/included model selection in IQ-TREE, ...) and then sticking with the model found to infer the phylogeny. How often would one get in trouble with such an approach? And if problems arise, how severe are they? Could the clustering potentially be impacted or does the problem stay limited to certain branches (of certain length)? Or is the tree as a whole deemed older/younger than it really is, i.e. does the underestimation propagate through the tree all the way to the root or not?}
+
+\response{
+    Such inference from large viral data sets is increasingly feasible as data set size increases and complements deep mutations scanning approaches.
+    While we identify problems for phylogenetic inference associated with strong variation model variation along the sequence, we don't have a solution.
+}
+
 
 \Richard{See what model selectors do for simulated data}
 
 
 \refb{In a way, I’m not too sure what the conclusions from Figure 3 are in practice? Everything except for the true model results in underestimation, even the site-specific model in TreeTime. From a practical point of view, what could be done to fix the underestimation problem? Would some form of post-hoc correction be advised, but how would one know which branches to correct and which to leave along? In that regard, could thorough knowledge of the data provide any guidance; but even then, and related to the HIV example (and other virus examples), inaccurate branch lengths of 100 years or more are most likely not a major concern.}
 
-\Richard{This is one core part of the paper: this is a difficult problem to fix. }
+\response{In essence, Fig 3 shows that branch length underestimation caused by extensive variation of rates and preferences is very hard to avoid.
+As outlined above, we don't really have a good fix for that, but we investigate the causes in Fig 4.
+That said, the main result of the paper is that site-specific frequencies can be accurately estimated.
+The inability is estimating the length of long branches in RNA viruses is a serious concern for dating zoonosis and exploring the history of viruses causing measles, dengue, lassa etc.
+This problem is clearly apparent when trying to date the common ancestor of SIVs.
+Molecular clock approaches suggest an ancestor a few hundred years in the past, while viruses in island populations show that the common ancestor is much more ancient.
+}
+
 
 
 \refb{The manuscript deals with estimates (i.e. trees) that were obtained using IQ-TREE and FastTree (which produce unrooted trees and don’t employ the concept of a molecular clock), which were subsequently fed into TreeTime which employs the provided trees as is. This makes me wonder if the conclusions from the manuscript hold up in frameworks that i) employ a molecular clock directly in their estimations, and ii) do not employ a fixed topology but rather explore a distribution of trees as typically done in Bayesian phylogenetic inference. I’m not suggesting the authors do the same experiments in a Bayesian framework but their take on this could be interesting for the discussion section.}
@@ -171,7 +184,8 @@ All we want to do is to point out that branch length under-estimation potentiall
 
 \refb{Lines 651-653: I’m going to assume that most readers, like myself, will not be very familiar with the work of Halpern and Bruno (1998). Hence these sentences will need to provide more information regarding the following statement: ‘only allow for site-specific rates and equilibrium frequencies while using the same transition matrix for every site.’ Regarding the site-specific (evolutionary) rates, there may be confusion as to whether the process meant is actually among-site rate variation (typically modelled as a discretized gamma distribution according to various paper of Ziheng Yang), or relative rates between positions which can be superimposed on the former model. I’m going to assume the latter, but in that case it’s not clear whether for each site a unique rate will be estimated (if so, that’s a lot of additional parameters and this needs to be discussed) or whether classes of sites will be imposed (the three different codon positions for example) and that for only each of these classes a unique rate will be estimated? Essentially, I have the same question regarding the equilibrium frequencies, as it’s not clear from the methods section (but I can guess from the simulated data section; still, the authors should be more explicit here).}
 
-\Richard{This shows that this reviewer really didn't understand what we are doing. We don't do partition models. }
+\response{
+The points raised by this reviewer have made it clear to us that the description of our basic motivation and model set-up was not clear enough. In response to this, we have rewritten several parts of the manuscript and point out explicitly in multiple places that we do not consider partition models but investigate to what extend models in which every site has their own set of of frequencies and an overall rate can be estimated. }
 
 
 \refb{Implementation: this type of modelling is not new, although it surely is a useful -- and needed -- extension to TreeTime. It’s unclear at this point whether the transition matrix will also be (potentially) site-specific or not, and I encourage the authors to mention this explicitly in the implementation paragraph.}
@@ -182,6 +196,7 @@ All we want to do is to point out that branch length under-estimation potentiall
 \refb{Line 681: This makes it sounds like either two data partitions will be simulated that will either be concatenated or the contents will be scrambled to create one alignment of length L=2000 that is then a mixture of the different (site-specific) processes. But I have the feeling that this is not what the authors are after; can this be more explicitly explained?}
 
 \response{The reviewer is correct, we don't have two data partitions of length 1000.
+Every site has its own set of frequencies and an overall rate.
 Instead, we produce hierarchical data sets that allow us to explore the effect of different aspects of the problem (tree, model realization, realization of the sequence evolution given the model) on the inferences.
 We added sentence to make this clear. }
 

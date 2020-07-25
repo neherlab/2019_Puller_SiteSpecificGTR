@@ -346,12 +346,15 @@ Furthermore, this analysis suggests very little signal to estimate the length of
 
 
 \section*{Discussion}
-Sequence evolution models attempt to capture some biological realism while being computationally tractable and easy to parameterize.
-A common compromise is to model rate heterogeneity as random effects, while assuming identical site preferences across the sequence or to allow for a small number of data partitions with different preferences.
-Different positions in a DNA sequence or protein, however, differ markedly in the preferences for different states -- this site-specific preference is the basis of all common homology search tools.
-While the need to account for this variation has been known for decades \citep{bruno1996modeling,halpern_evolutionary_1998}, it is typically not modeled due to over-fitting concerns and due to computational complexity.
-However, amino acid preferences can now be measured with high-throughput \citep{fowler_deep_2014} and data set sizes are increasing rapidly such that more complex models can be estimated.
-Large data sets, however, require efficient and scalable methods.
+Different positions in a genome sequence or a protein change at different rates and explore different subsets of the available states.
+These site-specific properties are evolutionary conserved and are the basis of all common homology search tools.
+Which states are permissible at which position can be measured with high-throughput using deep mutational scanning techniques \citep{fowler_deep_2014} or can be estimated from large alignments of homologous sequences.
+Both approaches can reveal biological function and organization of the entity coded for by the sequence.
+\citet{bruno1996modeling} pointed out that the frequencies of states in columns of an alignment are distorted by phylogenetic correlations and how these phylogenetic correlations can be accounted for.
+However, estimating these frequencies accurately requires large data sets that have only recently become available.
+
+While accurate estimates of site-specific frequencies require correction of phylogenetic correlations, accurate phylogenetic inference requires sufficiently realistic models of sequence evolution while being computationally tractable and easy to parameterize.
+A common compromise is to model rate heterogeneity as random effects, while assuming identical site preferences across the sequence or to allow for a small number of data partitions with different preferences \citep{Lartillot01062004}.
 
 Here, we presented method to estimate site-specific GTR models using an iterative EM-type approach inspired by \citet{bruno1996modeling}.
 We showed that site-specific models can be inferred with an accuracy limited by the Poisson statistics of the substitution process using an efficient iterative scheme.
