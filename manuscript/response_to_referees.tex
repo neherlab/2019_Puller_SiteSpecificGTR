@@ -20,10 +20,23 @@
 \begin{document}
 \section*{Response to reviewers}
 
-\begin{itemize}
-    \item general issue: site specific models are computationally expensive, but only useful for large data sets.
-    \item main objective here is to provide a method for estimating them from large data sets, but point out the limitations.
-\end{itemize}
+We have revised our manuscript extensively in response to the reviewer comments.
+In particular, we have put more emphasis on the parts of the manuscript that address estimation of site-specific preferences as means to learn about the biology of the organism as a opposed tto nuisance parameters in phylogenetic inference.
+We now also stress that we are not studying site-heterogeneity in the form of a small number of data partitions, but are interested in the ability to estimate preferences for every site in the alignment.
+Overall, we feel that the manuscript has much improved from the this refocus and has become simpler to follow.
+
+
+\subsection*{Associate Editor: Martin, Darren}
+
+\editor{This seems like a good paper but in its current state virus evolution may not be a very good fit for it.  I think though that if you follow reviewer 2's recommendations (especially with respect to providing practical advice to virologists) it should be relatively straightforward to make the paper a bit more accessible to virus evolution's readership.}
+
+\response{
+Thank you very much for handling the paper and providing these two reviews.
+We realized that our original manuscript was misleading to people familar complex mixture models that pratition the seqeunce data into categories with similar properties.
+We now make it very explicit that this is not what we study -- instead, we study the extent to which we can estimate specifci properties of every columns of an alignment.
+Such inferences can complement deep-mutational scanning techniques and become increasingly feasible as more and more diverse sequences of RNA viruses are available.
+
+}
 
 
 \subsection*{Reviewer: 1}
@@ -34,10 +47,8 @@
 
 \refa{- The authors mention that other methods to infer site-specific parameters do exist. How does their new algorithm compare in terms of speed or accuracy?}
 
-\Richard{ask Sarah}
 \response{we have attempted to compare our results with
-\texttt{swmutsel}. However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time,
-swmutsel takes hours where the site specific inference by treetime takes minutes.
+\texttt{swmutsel}. However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time, swmutsel takes hours where the site specific inference by treetime takes minutes.
 But we are afraid the results are not immediately comparable. }
 
 
@@ -56,7 +67,7 @@ We added this to the manuscript.}
 We are grateful for these suggestions to improve the figures:
 \begin{itemize}
     \item we changed Fig 5 and Fig S4 to two dimensional histograms
-    \item we added second legend to figure 1 that maps line style to samples size
+    \item we added second legend to figure 1 that maps line style to samples size. We also removed the curves corresponding to naive estimates by alignment frequencies. These are also include in Fig 2 and hence not needed here.
     \item labeling individual lines in Fig 2 proved a bit tricky, but we added markers to the lines such they can be distinguished without reference to color.
 \end{itemize}
 }
@@ -69,8 +80,8 @@ We are grateful for these suggestions to improve the figures:
 
 \response{Thank you for this note. We realized that the intention and model class studied in our manuscript wasn't clear enough. We now emphasize that we study whether models with different state preferences at every site can be accurately estimated.
 
-We now point out in the abstract that site heterogenous models with partitions are a common way to include biological complexity and that model selection has to be used to determine model complexity.
- }
+We now point out in multiple places that site heterogenous models with partitions are a common way to include biological complexity and that model selection has to be used to determine model complexity.
+}
 
 \refb{Abstract, line 21: It needs to be pointed out that a careful model selection strategy should already be part of a standard phylogenetic/phylodynamic data analysis, where indeed site-specific models are being included in the mix. That’s certainly how I do things, but then I don’t see what would be different with what the authors present here (more to be uncovered as I read through the manuscript obviously, but would be good to point out how the suggested approach will differ from such a model selection study).}
 
@@ -86,15 +97,15 @@ As such, the problem is distinct (but related) to a model selection problem.
 
 \refb{Abstract, lines 24-25: I assume it will be pointed out that the BEAST/BEAST2 packages do allow for site-specific models to be used (with for example a simple button that allows to select the SRD06 model, of which the paper should be cited)?}
 
-\response{We discuss site-heterogenous partition models carefully in the main text.}
+\response{We now discuss site-heterogenous partition models carefully in the main text.}
 
 
 \refb{Lines 120-122: This brings to mind a recent paper by Gascuel and Steel ‘A Darwinian Uncertainty Principle’ in which the issue of jointly estimating the ancestral states and the transitions of those states is investigated. Given the parameters the authors are interested in here and their assessment through simulations, it seems to me that the authors need to clarify the novelty of their investigations and how theirs sets them apart from those investigated by Gascuel and Steel (actually Figure 1 reminds me of Figure 2 in the paper by Gascuel and Steel).}
 
 \response{The paper by Gascuel and Steel (which we were unaware of) discusses indeed similar topics as we do. Gascuel and Steel investigate whether the state of the root if a character can be inferred jointly with the equilibrium probabilities or the transition matrix. Consistent with our results, they find that this is possible for Yule trees.
-Here, we are mmostly concerned with estimating the model, not the root state.
-We also consider sequence evolution rather than the evolution of a single character.
-This allows us to investigate the extent to which branch lengths can be estimated along with the model.
+Here, we are mostly concerned with estimating the model, not the root state, and treat ancestral states as nuissance parameters that at least in principle can be integrated out.
+In constrast to Gascuel and Steel, we consider sequence evolution rather than the evolution of a single character which allows our model to share the symmetric transmission matrix across sites.
+It also allows us to investigate the extent to which branch lengths can be estimated along with the model.
 
 We now discuss our results in the light of the results by Gascuel and Steel and thank the reviewer for pointing out this work to us.
 }
@@ -107,7 +118,7 @@ Much of the remainder of the manuscript is devoted to the issue of identifiablil
 As data sets grow in size, such site specific parameters become increasingly identifiable and this is focus of this study.
 The properties of category models have for example been studied systematically by Kainer and Lanfear.
 
-We now point out the risk of overfitting more clearly at the beginning of the section ``Accuracy of the inferences'' and emphasize that this is one of the research questions we want to address: How much data do you need to estimate such parameters?
+We now point out the risk of overfitting more clearly at the beginning of the section ``Accuracy of model inferences'' and emphasize that this is one of the research questions we want to address: How much data do you need to estimate such parameters?
 }
 
 
@@ -122,7 +133,7 @@ We now point out the risk of overfitting more clearly at the beginning of the se
 \response{Indeed, Gascuel and Steel show a similar graph for the joint estimation of ancestral state of a single discrete character and the model of its evolution. We now point out this analogy.
 
 The connection to Gascuel and Steel is particularly apt when discussion the inability to jointly infer the ancestral state and the model.
-We also draw attention to the fact that accurate model estimation is possible for know trees, consistent with the results by G\&S that estimation is possible for Yule trees.
+We also draw attention to the fact that accurate model estimation is possible for known trees, consistent with the results by G\&S that joint ancestral reconstruction and model inference is possible for Yule trees.
 }
 
 \refb{In my opinion, the ‘Accuracy of inferences’ section is hard to digest, mostly because of its technicality and -- in my personal opinion -- due to the fact that the figures (specifically figures 1 and 2) aren’t very intuitive so I would suggest the authors to rework both the use of the Y-axis (if the authors want to discuss accuracy in the text, then the graphs should be going up in the figures as well), as well as the legends within the figures, which also aren’t self-explanatory and require to go through the text in detail.}
@@ -141,23 +152,20 @@ We adjusted to text to more explicitly point out that the graphs show squared er
 
 \response{We have made an effort to make this section more accessible, but we think it is an important part of the manuscript and one of the reasons we think Virus Evolution is an appropriate journal.
 This section explores the ability to estimate site specific preferences from large and diverse alignments of RNA viruses.
-Similar analysis could be done for other RNA viruses.
-Furthermore, it points out implications for phylogenetic inferences.
+Diverse viruses like HIV are one place were data to apply such methods are available and the interpretation of conservation and viral fitness is of interest to many readers of Virus Evolution.
+Furthermore, our work has implications for dating of divergence times of RNA viruses.
 We don't have solutions for the latter, but feel that it is still important to point them out.
 }
 
 
-\response{We have made an effort to simplify and clarify this example. But we feel that the application of to HIV data is one aspect of what makes this paper suitable for Virus Evolution: Diverse viruses like HIV are one place were data to apply such methods are available and the interpretation of conservation and viral fitness is of interest to many readers of Virus Evolution. }
-
 \refb{But what I’m missing the most from the results and discussion sections of the manuscript, is clear advice on how to perform analyses on real data, what to look out for and how to potentially remedy the problem. The manuscript is too technical in that regard, and while assessing accuracy problems is important, a step-by-step approach for empirical data sets- to potentially/hopefully mitigate the problems mention in this manuscript - is even more important. It would be most helpful if the authors comment on the typical workflow, i.e. running ModelTest or something similar (PartitionFinder, automatic/included model selection in IQ-TREE, ...) and then sticking with the model found to infer the phylogeny. How often would one get in trouble with such an approach? And if problems arise, how severe are they? Could the clustering potentially be impacted or does the problem stay limited to certain branches (of certain length)? Or is the tree as a whole deemed older/younger than it really is, i.e. does the underestimation propagate through the tree all the way to the root or not?}
 
 \response{
-    Such inference from large viral data sets is increasingly feasible as data set size increases and complements deep mutations scanning approaches.
-    While we identify problems for phylogenetic inference associated with strong variation model variation along the sequence, we don't have a solution.
+We hope that the revision makes now clear that phylogenetic inference is not the focus of the manuscript, but that we instead study how properties of sites can be learned from sequence diversity.
+Such inference from large viral data sets is increasingly feasible as data set size increases and complements deep mutations scanning approaches.
+While we identify problems for phylogenetic inference associated with strong variation model variation along the sequence, we don't have a solution.
+The site specific models we estimate could serve as input for ParitionFinder or the "-MF+MERGE" feature of IQ-tree.
 }
-
-
-\Richard{See what model selectors do for simulated data}
 
 
 \refb{In a way, I’m not too sure what the conclusions from Figure 3 are in practice? Everything except for the true model results in underestimation, even the site-specific model in TreeTime. From a practical point of view, what could be done to fix the underestimation problem? Would some form of post-hoc correction be advised, but how would one know which branches to correct and which to leave along? In that regard, could thorough knowledge of the data provide any guidance; but even then, and related to the HIV example (and other virus examples), inaccurate branch lengths of 100 years or more are most likely not a major concern.}
@@ -177,7 +185,7 @@ Molecular clock approaches suggest an ancestor a few hundred years in the past, 
 \response{
 We are afraid there is a misunderstanding here.
 This manuscript deals with GTR models and the root doesn't matter.
-We only use root-to-tip distances in mid-point-rooted trees as a measure of divergence.
+We use root-to-tip distances in mid-point-rooted trees as a measure of divergence, but the root is no special place otherwise.
 The only place where time comes in are the HIV examples, but we only use time as a proxy for evolutionary rate and don't do any molecular clock analysis.
 All we want to do is to point out that branch length under-estimation potentially has consequences for dating rapidly evolving RNA viruses.}
 
@@ -209,8 +217,5 @@ We added sentence to make this clear. }
 
 \response{The site specific models were estimated using iterative approach described in Eq. 2 which effectively regularizes the problem with a Dirichlet prior. }
 
-\subsection*{Associate Editor: Martin, Darren}
-
-This seems like a good paper but in its current state virus evolution may not be a very good fit for it.  I think though that if you follow reviewer 2's recommendations (especially with respect to providing practical advice to virologists) it should be relatively straightforward to make the paper a bit more accessible to virus evolution's readership.
 
 \end{document}
