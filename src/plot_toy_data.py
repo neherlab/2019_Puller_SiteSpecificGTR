@@ -64,7 +64,7 @@ def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
     plt.figure()
     ls = {n:l for n,l in zip(sorted(subsets['n'], reverse=True), ['-', '--', '-.', ':'])}
     cols = {n:'C%d'%i for i,n in enumerate(subsets['n'])}
-
+    plottype = data_secondary is None
     mean_vals = make_means(data, subsets)
     lines = []
     dash_legend = []
@@ -72,12 +72,12 @@ def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
         tmp_p = {k:v for k,v in params}
         subs_per_site = d['mean'].index*tmp_p['n']
         l = plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
-                     c=colors[tmp_p['method']], ls=ls[tmp_p['n']])
+                     c=colors[tmp_p['method']] if plottype else 'C0', ls=ls[tmp_p['n']])
         if tmp_p['n']==np.max(subsets['n']):
-            lines.append([l, labels[tmp_p['method']]])
+            lines.append([l, labels[tmp_p['method']] if plottype else r'rate variation $\alpha=1.5$'])
 
-        if tmp_p['method']=='naive':
-            dash_legend.append(l, f"n={tmp_p['n']}")
+        if (data_secondary is None) and tmp_p['method']=='naive':
+            dash_legend.append([l, f"n={tmp_p['n']}"])
             # plt.text(subs_per_site[0], d['mean']['chisq_p'].iloc[0]*1.2,
             #         f"n={tmp_p['n']}", fontsize=fs*0.8)
 
@@ -86,20 +86,26 @@ def plot_pdist_vs_tree_length(data, data_secondary, subsets, fname=None):
         for params, d in mean_vals_secondary.items():
             tmp_p = {k:v for k,v in params}
             subs_per_site = d['mean'].index*tmp_p['n']
-            plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
-                         label='', c="#AAAAAA", ls=ls[tmp_p['n']])
+            l = plt.errorbar(subs_per_site, d['mean']['chisq_p'], d['std']['chisq_p'],
+                         label='', c="C1", ls=ls[tmp_p['n']])
+            if tmp_p['n']==np.max(subsets['n']):
+                lines.append([l, labels[tmp_p['method']] if plottype else r'rate variation $\alpha=3.0$'])
+
+            if tmp_p['method']=='dressed':
+                dash_legend.append([l, f"n={tmp_p['n']}"])
 
 
-    l = plt.plot([10,1000], [0.1,0.001]) #, label=r'$\sim x^{-1}$', c='k')
-    lines.append([l,r'$\sim x^{-1}$', c='k'])
-    plt.ylim([0.001, 1.6])
+    l = plt.plot([10,1000], [0.1,0.001], c='k') #, label=r'$\sim x^{-1}$', c='k')
+    lines.append([l,r'$\sim x^{-1}$'])
+    plt.ylim([0.001, 1.6 if plottype else 0.6])
     plt.yscale('log')
     plt.xscale('log')
-    plt.legend([x[0] for x in lines], [x[1] for x in lines], loc=3, fontsize=fs)
+    legend1 = plt.legend([x[0] for x in lines], [x[1] for x in lines], loc=3, fontsize=fs)
     plt.legend([x[0] for x in dash_legend], [x[1] for x in dash_legend], loc='center left', fontsize=fs)
+    plt.gca().add_artist(legend1)
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('average number of substitutions per site', fontsize=fs)
-    plt.ylabel('squared deviation of $p_i^a$', fontsize=fs)
+    plt.ylabel(r'squared deviation $\chi^2$ of $\hat{p}_i^a$', fontsize=fs)
     add_panel_label(plt.gca(),'A',  x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
 
@@ -113,22 +119,24 @@ def plot_pdist_vs_rtt(data, subsets, fname=None):
     # from the their true values. This is plotted vs the root-to-tip distance, which
     # determines the reconstruction accuracy. Given that we use Yule trees, the rtt is
     # roughly log(n)
-
+    markers = ['o', 'v', '^', '<', '>', 's', 'P', 'X', 'D']
     plt.figure()
     mean_vals = make_means(data, subsets)
+    mi = 0
     for params, d in mean_vals.items():
         tmp_p = {k:v for k,v in params}
         rtt = d['mean'].index*np.log(tmp_p['n'])
-        plt.errorbar(rtt, d['mean']['chisq_p'], d['std']['chisq_p'],
+        plt.errorbar(rtt, d['mean']['chisq_p'], d['std']['chisq_p'], marker = markers[mi], ls='-',
                      label=labels[tmp_p['method']] if tmp_p['n']==subsets['n'][0] else '',
                      c=colors[tmp_p['method']])
+        mi +=1
 
     plt.yscale('log')
     plt.xscale('log')
     plt.legend(fontsize=fs*0.8, loc=3)
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('root-to-tip distance', fontsize=fs)
-    plt.ylabel('squared deviation', fontsize=fs)
+    plt.ylabel(r'squared deviation $\chi^2$ of $\hat{p}_i^a$', fontsize=fs)
     plt.title('amino acids' if 'aa' in fname else 'nucleotides', fontsize=fs*1.3)
     add_panel_label(plt.gca(), 'B' if 'aa' in fname else 'A', x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
@@ -201,11 +209,11 @@ def plot_rate_correlation(data, subsets, fname=None):
 
     plt.xscale('log')
     plt.ylim(0,1.1)
-    plt.legend(fontsize=fs)
+    plt.legend(fontsize=fs, loc=4)
     plt.tick_params(labelsize=0.8*fs)
     plt.xlabel('average number of substitution per site', fontsize=fs)
     plt.ylabel('inferred/true rate correlation', fontsize=fs)
-    plt.plot([10,max(subsets['n'])/3], [1,1], lw=2, c='#CCCCCC')
+    plt.plot([3,max(subsets['n'])/2], [1,1], lw=2, c='#CCCCCC')
     add_panel_label(plt.gca(), 'B', x_offset=-0.12, fs=fs*1.3)
     plt.tight_layout()
 
@@ -259,8 +267,11 @@ if __name__ == '__main__':
     n_vals = np.unique(data['n'])
 
     #### Fig1: equilibrium frequency accuracy for all n and mu's
-    plot_pdist_vs_tree_length(data, data_3, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':n_vals},
+    plot_pdist_vs_tree_length(data, data_3, subsets = {'pc':[pc_general], 'method':['dressed', 'naive'] if aa else ['dressed'], 'n':n_vals},
                                 fname='figures/p_dist_vs_treelength'+suffix)
+
+    plot_pdist_vs_tree_length(data, None, subsets = {'pc':[pc_general], 'method':['naive', 'dressed'], 'n':[3000]},
+                                fname='figures/p_dist_vs_treelength_withAln'+suffix)
 
     #### Fig 2: average rate vs true rate. shows the effect of first order
     #approximation when working off counts. uninformative for other models since

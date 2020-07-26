@@ -103,6 +103,8 @@ if __name__ == '__main__':
 
     fitness_estimates_gtr = calculate_in_out_ratio(gtr, fabio_fitness.loc[:,"consensus"])
 
+    max_bin = int(50*len(fitness_estimates_gtr)/3000)
+
     ccoef=pearsonr
     #ccoef=spearmanr
     div_rec = diversity(gtr.Pi)
@@ -136,7 +138,7 @@ if __name__ == '__main__':
     cc_fit = ccoef(np.log(fabio_fitness['median'][valid]), np.log(1e-10+fitness_estimates_gtr)[valid])
     #plt.scatter(fabio_fitness['median'], fitness_estimates_gtr, label=r'$r^2=$'+'%1.2f'%cc_fit[0]**2)
     #plt.legend(fontsize=fs)
-    plt.hexbin(fabio_fitness['median'], fitness_estimates_gtr, xscale='log', yscale='log', gridsize=16, mincnt=1, vmin=1, vmax=75)
+    plt.hexbin(fabio_fitness['median'], fitness_estimates_gtr, xscale='log', yscale='log', gridsize=16, mincnt=1, vmin=1, vmax=max_bin)
     plt.xlim([3e-5, 3e0])
     plt.ylim([3e-2, 3e3])
     plt.text(5e-5, 1e3, r'$r^2=$'+'%1.2f'%cc_fit[0]**2, fontsize=fs)
@@ -159,8 +161,8 @@ if __name__ == '__main__':
     cc_div = ccoef(np.log(1e-10+div_aln), np.log(1e-10+fitness_estimates_gtr))
     # plt.scatter(div_aln, fitness_estimates_gtr, label=r'$r^2=$'+'%1.2f'%cc_div[0]**2)
     #plt.legend(fontsize=fs)
-    plt.hexbin(div_aln, fitness_estimates_gtr, xscale='log', yscale='log', gridsize=16, mincnt=1, vmin=1, vmax=75)
-    plt.text(3e-4, 3e3, r'$r^2=$'+'%1.2f'%cc_div[0]**2, fontsize=fs)
+    plt.hexbin(div_aln+1e-4, fitness_estimates_gtr, xscale='log', yscale='log', gridsize=16, mincnt=1, vmin=1, vmax=max_bin)
+    plt.text(3e-4, 1e-1, r'$r^2=$'+'%1.2f'%cc_div[0]**2, fontsize=fs)
     plt.title('amino acids' if args.aa else 'nucleotides',fontsize=fs)
     plt.xlim([2e-4, 3e0])
     plt.ylim([3e-2, 9e3])
