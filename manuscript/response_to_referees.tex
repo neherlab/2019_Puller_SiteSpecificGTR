@@ -20,22 +20,19 @@
 \begin{document}
 \section*{Response to reviewers}
 
-We have revised our manuscript extensively in response to the reviewer comments.
-In particular, we have put more emphasis on the parts of the manuscript that address estimation of site-specific preferences as means to learn about the biology of the organism as a opposed tto nuisance parameters in phylogenetic inference.
-We now also stress that we are not studying site-heterogeneity in the form of a small number of data partitions, but are interested in the ability to estimate preferences for every site in the alignment.
-Overall, we feel that the manuscript has much improved from the this refocus and has become simpler to follow.
-
-
 \subsection*{Associate Editor: Martin, Darren}
+
+Thank you very much for handling the paper and providing these two constructive reviews that have helped us to improve the paper. Please accept our apologies for the delayed resubmission. My two co-authors have moved one (more than a year ago) and I have been caught up in SARS-CoV-2 related work for much of the year.
+
+We realized that our original manuscript was misleading to people familiar complex mixture models that partition the sequence data into categories with similar properties. We now make it very explicit that this is not what we study -- instead, we study the extent to which we can estimate specific properties of every column of an alignment. Many of the comments by Reviewer 2 suggest that they were expecting an analysis of partition models while in fact, we studied the identifiability of parameters describing selection at every single site in the sequence. Such inferences can complement deep-mutational scanning techniques and become increasingly feasible as more and more diverse sequences of RNA viruses are available. We, therefore, think that the paper is of interest to the readership of Virus Evolution.
+
 
 \editor{This seems like a good paper but in its current state virus evolution may not be a very good fit for it.  I think though that if you follow reviewer 2's recommendations (especially with respect to providing practical advice to virologists) it should be relatively straightforward to make the paper a bit more accessible to virus evolution's readership.}
 
 \response{
-Thank you very much for handling the paper and providing these two reviews.
-We realized that our original manuscript was misleading to people familar complex mixture models that pratition the seqeunce data into categories with similar properties.
-We now make it very explicit that this is not what we study -- instead, we study the extent to which we can estimate specifci properties of every columns of an alignment.
-Such inferences can complement deep-mutational scanning techniques and become increasingly feasible as more and more diverse sequences of RNA viruses are available.
-
+We have rewritten large parts of the manuscript to make our work more accessible and relevant to the readership of Virus Evolution.
+Since our primary objective is to learn about the biology of virus from sequence diversity, rather than develop methods for phylogenetic inference, we believe Virus Evolution and not Systematic Biology is an appropriate venue for this work.
+The referee reports were very useful in rewriting and refocussing our work.
 }
 
 
@@ -47,8 +44,8 @@ Such inferences can complement deep-mutational scanning techniques and become in
 
 \refa{- The authors mention that other methods to infer site-specific parameters do exist. How does their new algorithm compare in terms of speed or accuracy?}
 
-\response{we have attempted to compare our results with
-\texttt{swmutsel}. However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time, swmutsel takes hours where the site specific inference by treetime takes minutes.
+\response{we have attempted to compare our results with \texttt{swmutsel}.
+However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time, swmutsel takes hours where the site specific inference by treetime takes minutes.
 But we are afraid the results are not immediately comparable. }
 
 
@@ -74,6 +71,11 @@ We are grateful for these suggestions to improve the figures:
 
 
 \subsection*{Reviewer: 2}
+
+We thank the reviewer for their detailed review of our manuscript and the many constructive comments.
+This review as revealed that we should have been much more explicit about the relation of our manuscript to partition models commonly used to model site-heterogeneity of rates or preferences.
+Instead of partitioning the sequence data into a small number of categories, we investigate to what extent we can learn parameters that describe specific selective pressures at every column in the alignment.
+The primary objective is to learn about the function of the sequence, not phylogenetic inference.
 
 
 \refb{Abstract, line 19: I would phrase this more carefully, as I personally feel that site-specific substitution models are in fact quite popular (with indeed their own site-specific evolutionary rate being assigned/assumed as well) and easy to set up in many inference packages.}
