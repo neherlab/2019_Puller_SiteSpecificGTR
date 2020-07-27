@@ -5,6 +5,7 @@
 %\usepackage{natbib}
 \newcommand{\gene}[1]{{\it #1}}
 \newcommand{\comment}[1]{{\color{red}#1}}
+\definecolor{response}{rgb}{0.1, 0.1, 0.1}
 \definecolor{drab}{rgb}{0.59, 0.44, 0.09}
 \definecolor{celestialblue}{rgb}{0.29, 0.59, 0.82}
 \definecolor{purple}{rgb}{0.459,0.109,0.538}
@@ -14,7 +15,7 @@
 \newcommand{\refb}[1]{\textbf{R2:} #1}
 \newcommand{\editor}[1]{\textbf{Editor:} #1}
 %\newcommand{\criticism}[1]{\textbf{Criticism:} #1}
-\newcommand{\response}[1]{{\color{black}\textbf{Response:} #1}}
+\newcommand{\response}[1]{{\it {\color{response}\textbf{Response:} #1}}}
 
 
 \begin{document}
@@ -22,10 +23,11 @@
 
 \subsection*{Associate Editor: Martin, Darren}
 
-Thank you very much for handling the paper and providing these two constructive reviews that have helped us to improve the paper. Please accept our apologies for the delayed resubmission. My two co-authors have moved one (more than a year ago) and I have been caught up in SARS-CoV-2 related work for much of the year.
+\response{
+Thank you very much for handling our manuscript and providing these two constructive reviews that have helped us to improve the paper. Please accept our apologies for the delayed resubmission. My two co-authors have moved one (more than a year ago) and I have been caught up in SARS-CoV-2 related work for much of the year.
 
-We realized that our original manuscript was misleading to people familiar complex mixture models that partition the sequence data into categories with similar properties. We now make it very explicit that this is not what we study -- instead, we study the extent to which we can estimate specific properties of every column of an alignment. Many of the comments by Reviewer 2 suggest that they were expecting an analysis of partition models while in fact, we studied the identifiability of parameters describing selection at every single site in the sequence. Such inferences can complement deep-mutational scanning techniques and become increasingly feasible as more and more diverse sequences of RNA viruses are available. We, therefore, think that the paper is of interest to the readership of Virus Evolution.
-
+We realized that our original manuscript was misleading to people familiar with complex mixture models that partition the sequence data into categories with similar properties. We now make it very explicit that this is not what we study -- instead, we study the extent to which we can estimate specific properties of every column of an alignment. Many of the comments by Reviewer 2 suggest that they were expecting an analysis of partition models while in fact, we studied the identifiability of parameters describing selection at every single site in the sequence. Such inferences can complement deep-mutational scanning techniques and become increasingly feasible as more and more diverse sequences of RNA viruses are available. We, therefore, think that the paper is of interest to the readership of Virus Evolution.
+}
 
 \editor{This seems like a good paper but in its current state virus evolution may not be a very good fit for it.  I think though that if you follow reviewer 2's recommendations (especially with respect to providing practical advice to virologists) it should be relatively straightforward to make the paper a bit more accessible to virus evolution's readership.}
 
@@ -33,6 +35,8 @@ We realized that our original manuscript was misleading to people familiar compl
 We have rewritten large parts of the manuscript to make our work more accessible and relevant to the readership of Virus Evolution.
 Since our primary objective is to learn about the biology of virus from sequence diversity, rather than develop methods for phylogenetic inference, we believe Virus Evolution and not Systematic Biology is an appropriate venue for this work.
 The referee reports were very useful in rewriting and refocussing our work.
+
+We provide a point-by-point response below.
 }
 
 
@@ -44,9 +48,11 @@ The referee reports were very useful in rewriting and refocussing our work.
 
 \refa{- The authors mention that other methods to infer site-specific parameters do exist. How does their new algorithm compare in terms of speed or accuracy?}
 
-\response{we have attempted to compare our results with \texttt{swmutsel}.
-However, \texttt{swmutsel} seems completely focussed on codon models, something that isn't currenly implemented in treetime. In terms of run-time, swmutsel takes hours where the site specific inference by treetime takes minutes.
-But we are afraid the results are not immediately comparable. }
+\response{The most obvious software to compare our results to would be \texttt{swmutsel}.
+However, \texttt{swmutsel} specifically models sequences are amino acides and their codons, something that isn't currenly implemented in treetime. In terms of run-time, swmutsel takes hours where the site specific inference by treetime takes minutes.
+But we are afraid the results are not immediately comparable.
+We have hence refrained from attempting a comparision.
+}
 
 
 \refa{- For the simulations, the author draw site-specific preferences from a Dirichlet distribution with $\alpha$ equal to 0.2 or 0.5. It would be nice to present a more interpretable value of the preferences as well, such as entropy or effective number.}
@@ -55,7 +61,7 @@ But we are afraid the results are not immediately comparable. }
 Thank you for this suggestion.
 For amino acid alphabets, $\alpha=0.2$ and $\alpha=0.5$ correspond to an average entropy of $1.8$ or $2.3$ (in natural log units), respectively.
 Calculating the effective number of states as $\left(\sum_i p_i^2\right)^{-1}$ yields 4.7 or 7.8 effective states.
-We added this to the manuscript.}
+We added th the latter to the manuscript.}
 
 
 \refa{- Fig 5 and Fig S4 are both over-plotted and making the points transparent or adding histograms would help with interpretability. In Fig 1, the differences in linetype should be included in the legend. In Fig 2, it would be easier to keep the models straight if the lines were annotated on the graph directly instead of relying exclusively on color.}
@@ -63,7 +69,7 @@ We added this to the manuscript.}
 \response{
 We are grateful for these suggestions to improve the figures:
 \begin{itemize}
-    \item we changed Fig 5 and Fig S4 to two dimensional histograms
+    \item we reduced marker size and opacity in Fig 5 and Fig S4 to reduce overplotting. We also experimented with two dimensional histograms, but bins at the border of the domain (almost invariable sites) dominate to a degree that it is hard to see differences in the remainder of the histogram.
     \item we added second legend to figure 1 that maps line style to samples size. We also removed the curves corresponding to naive estimates by alignment frequencies. These are also include in Fig 2 and hence not needed here.
     \item labeling individual lines in Fig 2 proved a bit tricky, but we added markers to the lines such they can be distinguished without reference to color.
 \end{itemize}
@@ -71,17 +77,16 @@ We are grateful for these suggestions to improve the figures:
 
 
 \subsection*{Reviewer: 2}
-
+\response{
 We thank the reviewer for their detailed review of our manuscript and the many constructive comments.
 This review as revealed that we should have been much more explicit about the relation of our manuscript to partition models commonly used to model site-heterogeneity of rates or preferences.
 Instead of partitioning the sequence data into a small number of categories, we investigate to what extent we can learn parameters that describe specific selective pressures at every column in the alignment.
 The primary objective is to learn about the function of the sequence, not phylogenetic inference.
-
+}
 
 \refb{Abstract, line 19: I would phrase this more carefully, as I personally feel that site-specific substitution models are in fact quite popular (with indeed their own site-specific evolutionary rate being assigned/assumed as well) and easy to set up in many inference packages.}
 
 \response{Thank you for this note. We realized that the intention and model class studied in our manuscript wasn't clear enough. We now emphasize that we study whether models with different state preferences at every site can be accurately estimated.
-
 We now point out in multiple places that site heterogenous models with partitions are a common way to include biological complexity and that model selection has to be used to determine model complexity.
 }
 
@@ -104,12 +109,13 @@ As such, the problem is distinct (but related) to a model selection problem.
 
 \refb{Lines 120-122: This brings to mind a recent paper by Gascuel and Steel ‘A Darwinian Uncertainty Principle’ in which the issue of jointly estimating the ancestral states and the transitions of those states is investigated. Given the parameters the authors are interested in here and their assessment through simulations, it seems to me that the authors need to clarify the novelty of their investigations and how theirs sets them apart from those investigated by Gascuel and Steel (actually Figure 1 reminds me of Figure 2 in the paper by Gascuel and Steel).}
 
-\response{The paper by Gascuel and Steel (which we were unaware of) discusses indeed similar topics as we do. Gascuel and Steel investigate whether the state of the root if a character can be inferred jointly with the equilibrium probabilities or the transition matrix. Consistent with our results, they find that this is possible for Yule trees.
+\response{The paper by Gascuel and Steel (which we were unaware of) discusses indeed similar topics as we do. Gascuel and Steel investigate whether the state of the root of a character can be inferred jointly with the equilibrium probabilities or the transition matrix. Consistent with our results, they find that this is possible for Yule trees.
 Here, we are mostly concerned with estimating the model, not the root state, and treat ancestral states as nuissance parameters that at least in principle can be integrated out.
 In constrast to Gascuel and Steel, we consider sequence evolution rather than the evolution of a single character which allows our model to share the symmetric transmission matrix across sites.
 It also allows us to investigate the extent to which branch lengths can be estimated along with the model.
 
 We now discuss our results in the light of the results by Gascuel and Steel and thank the reviewer for pointing out this work to us.
+G\&S's work is mentioned in the section discussing the accuracy of inferences and the discussion.
 }
 
 \refb{Line 141: True, and this deserves a lot more explanation in the manuscript, i.e. how far should one typically push the site-specific assumptions? The authors need to make it explicitly clear if they plan to estimate (and assess) one or more site-specific parameters for each site, or whether some of these parameters are shared across categories of sites as is most commonly done when dealing with data partitions (such as partitioning by codon position). If each site gets its own parameter(s), then overfitting seems to be a very real issue; but what about other cases such as pre-defined partitions? Or what about drawing certain parameters from a certain distribution or a hierarchical phylogenetic model, which could very much aid with overfitting issues by sharing data?}
@@ -119,7 +125,6 @@ In our model the symmetric substitution matrix is shared across sites, but each 
 Much of the remainder of the manuscript is devoted to the issue of identifiablility and over-fitting.
 As data sets grow in size, such site specific parameters become increasingly identifiable and this is focus of this study.
 The properties of category models have for example been studied systematically by Kainer and Lanfear.
-
 We now point out the risk of overfitting more clearly at the beginning of the section ``Accuracy of model inferences'' and emphasize that this is one of the research questions we want to address: How much data do you need to estimate such parameters?
 }
 
@@ -133,7 +138,6 @@ We now point out the risk of overfitting more clearly at the beginning of the se
 \refb{Lines 204-208: Again, this seems related to Gascuel and Steel.}
 
 \response{Indeed, Gascuel and Steel show a similar graph for the joint estimation of ancestral state of a single discrete character and the model of its evolution. We now point out this analogy.
-
 The connection to Gascuel and Steel is particularly apt when discussion the inability to jointly infer the ancestral state and the model.
 We also draw attention to the fact that accurate model estimation is possible for known trees, consistent with the results by G\&S that joint ancestral reconstruction and model inference is possible for Yule trees.
 }
@@ -141,7 +145,6 @@ We also draw attention to the fact that accurate model estimation is possible fo
 \refb{In my opinion, the ‘Accuracy of inferences’ section is hard to digest, mostly because of its technicality and -- in my personal opinion -- due to the fact that the figures (specifically figures 1 and 2) aren’t very intuitive so I would suggest the authors to rework both the use of the Y-axis (if the authors want to discuss accuracy in the text, then the graphs should be going up in the figures as well), as well as the legends within the figures, which also aren’t self-explanatory and require to go through the text in detail.}
 
 \response{We have rewritten a good part of this section. We now point out that we first investigate the performance of the inference scheme with known tree and ancestral states and then investigate the feasibility of estimating tree, ancestral states, and model together.
-
 Reviewer 1 also had suggestions to improve the figures and we have added more information to the legends and made it easier to differentiate between different line.
 We adjusted to text to more explicitly point out that the graphs show squared error, i.e., a quantity that decreases with increasing accuracy.
 }
@@ -186,9 +189,9 @@ Molecular clock approaches suggest an ancestor a few hundred years in the past, 
 
 \response{
 We are afraid there is a misunderstanding here.
-This manuscript deals with GTR models and the root doesn't matter.
+Our manuscript infers GTR models and the root does not matter.
 We use root-to-tip distances in mid-point-rooted trees as a measure of divergence, but the root is no special place otherwise.
-The only place where time comes in are the HIV examples, but we only use time as a proxy for evolutionary rate and don't do any molecular clock analysis.
+The only place where time comes in are the HIV examples, but we only use time as a proxy for divergence via the known evolutionary rate and don't do any molecular clock analysis.
 All we want to do is to point out that branch length under-estimation potentially has consequences for dating rapidly evolving RNA viruses.}
 
 
