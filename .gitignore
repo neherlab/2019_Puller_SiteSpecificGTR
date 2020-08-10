@@ -22,3 +22,7 @@
 *-blx.aux
 *-blx.bib
 *.run.xml
+
+
+*pyc
+*~
